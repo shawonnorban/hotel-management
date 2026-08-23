@@ -31,7 +31,7 @@ and extend individual business areas as the property grows.
 ## Project Description
 
 This repository contains the source code for a PHP hotel management platform
-developed and maintained by **Shawon Norban Group**. The application supports
+developed and maintained by **Shawon**. The application supports
 public room discovery and reservations, while authorized staff can manage the
 complete reservation lifecycle from booking and payment through check-in,
 check-out, reporting, and customer follow-up.
@@ -47,8 +47,7 @@ SMS, PDF documents, and QR-code workflows.
 | Repository | [shawonnorban/hotel-management](https://github.com/shawonnorban/hotel-management) |
 | Owner | [Shawon Norban](https://github.com/shawonnorban) |
 | Branch | `hotel-managements` |
-| Organization | Norban Group of Companies |
-| Website | [www.norbangroup.com](https://www.norbangroup.com) |
+
 
 ## Author And Maintainer
 
@@ -59,7 +58,6 @@ Bangladesh.
 
 - GitHub: [@shawonnorban](https://github.com/shawonnorban)
 - Email: [shawonnorban@gmail.com](mailto:shawonnorban@gmail.com)
-- Website: [norbangroup.com](https://www.norbangroup.com)
 - Facebook: [shawon2543](https://fb.com/shawon2543)
 
 ## Quick Navigation
