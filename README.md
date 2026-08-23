@@ -1,9 +1,50 @@
+<div align="center">
+
 # Hotel Management System
+
+### Complete hotel operations, reservations, and guest management platform
+
+<p>
+  <img src="https://img.shields.io/badge/PHP%20%7C%20CodeIgniter-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP and CodeIgniter">
+  <img src="https://img.shields.io/badge/Database-MySQL%20%7C%20MariaDB-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL or MariaDB">
+  <img src="https://img.shields.io/badge/Dependency-Composer-885630?style=for-the-badge&logo=composer&logoColor=white" alt="Composer">
+</p>
+
+<p>
+  Public booking website&nbsp;&bull;&nbsp;Operations dashboard&nbsp;&bull;&nbsp;Role-based access
+</p>
+
+</div>
 
 A modular hotel and hospitality management application built with PHP,
 CodeIgniter, MySQL/MariaDB, JavaScript, and Bootstrap-based web assets. It
 provides a public booking website and a permission-controlled administration
 dashboard for hotel operations.
+
+## Quick Navigation
+
+[Features](#what-the-system-does) &nbsp;|&nbsp;
+[Installation](#installation) &nbsp;|&nbsp;
+[Modules](#main-modules) &nbsp;|&nbsp;
+[URLs](#important-urls) &nbsp;|&nbsp;
+[API](#api) &nbsp;|&nbsp;
+[Security](#security-checklist)
+
+## Quick Start
+
+```bash
+composer install
+```
+
+Then configure `application/config/database.php`, import the required module
+schemas, start Apache and MySQL, and visit:
+
+```text
+http://localhost/hotel-management/
+```
+
+> **Deployment note:** Configure payment, email, SMS, and production credentials
+> before enabling those integrations. Never commit secrets to the repository.
 
 ## What The System Does
 
