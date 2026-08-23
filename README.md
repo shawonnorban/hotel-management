@@ -16,10 +16,51 @@
 
 </div>
 
-A modular hotel and hospitality management application built with PHP,
-CodeIgniter, MySQL/MariaDB, JavaScript, and Bootstrap-based web assets. It
-provides a public booking website and a permission-controlled administration
-dashboard for hotel operations.
+## About This Project
+
+Hotel Management System is a complete web-based solution for hotels and
+hospitality businesses. It combines a customer-facing booking website with an
+administration dashboard for reservations, rooms, payments, customers,
+accounts, inventory, HR, reports, and daily hotel operations.
+
+The project is designed to help hotel teams reduce manual work, centralize
+operational data, and provide guests with a straightforward online booking
+experience. Its modular CodeIgniter structure makes it possible to configure
+and extend individual business areas as the property grows.
+
+## Project Description
+
+This repository contains the source code for a PHP hotel management platform
+developed and maintained by **Shawon Norban Group**. The application supports
+public room discovery and reservations, while authorized staff can manage the
+complete reservation lifecycle from booking and payment through check-in,
+check-out, reporting, and customer follow-up.
+
+The system also includes supporting business tools for accounting, purchasing,
+stock, employee management, payroll, website content, payment gateways, email,
+SMS, PDF documents, and QR-code workflows.
+
+## Git Repository
+
+| Item | Information |
+| --- | --- |
+| Repository | [shawonnorban/hotel-management](https://github.com/shawonnorban/hotel-management) |
+| Owner | [Shawon Norban](https://github.com/shawonnorban) |
+| Branch | `hotel-managements` |
+| Organization | Norban Group of Companies |
+| Website | [www.norbangroup.com](https://www.norbangroup.com) |
+
+## Author And Maintainer
+
+**Shawon Norban Group** is a software development team focused on building
+efficient, data-driven web solutions and open collaboration. The project is
+associated with **Norban Group of Companies**, based in Gulshan 1, Dhaka,
+Bangladesh.
+
+- GitHub: [@shawonnorban](https://github.com/shawonnorban)
+- Email: [shawonnorban@gmail.com](mailto:shawonnorban@gmail.com)
+- Website: [norbangroup.com](https://www.norbangroup.com)
+- Facebook: [shawon2543](https://fb.com/shawon2543)
 
 ## Quick Navigation
 
