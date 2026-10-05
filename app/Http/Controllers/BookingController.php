@@ -6,7 +6,10 @@ use App\Models\BookedInfo;
 use App\Models\PaymentMethod;
 use App\Models\Roomdetails;
 use App\Services\BookingService;
+use App\Services\BookingNotifier;
 use App\Services\InvoiceService;
+use App\Services\OnlinePaymentService;
+use App\Services\ReservationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,10 +18,13 @@ use RuntimeException;
 
 class BookingController extends Controller
 {
-    /** Payment methods that need no online gateway (card / cash at hotel / bank transfer). */
-    private const OFFLINE_METHODS = [1, 4, 6];
-
-    public function __construct(private BookingService $booking) {}
+    public function __construct(
+        private BookingService $booking,
+        private InvoiceService $invoices,
+        private OnlinePaymentService $online,
+        private BookingNotifier $notifier,
+        private ReservationService $reservations,
+    ) {}
 
     public function store(Request $request)
     {
@@ -71,8 +77,8 @@ class BookingController extends Controller
 
         return view('booking.checkout', [
             'booking' => $booking,
-            'methods' => PaymentMethod::where('is_active', 1)->orderBy('payment_method_id')->get(),
-            'offline' => self::OFFLINE_METHODS,
+            'methods' => PaymentMethod::where('is_active', 1)->orderBy('payment_method_id')->get()
+                ->each(fn ($m) => $m->online = (bool) $this->online->gatewayForMethod($m)),
         ]);
     }
 
@@ -85,15 +91,24 @@ class BookingController extends Controller
         if (! $method) {
             return back()->withErrors(['method' => 'That payment method is not available.']);
         }
-        if (! in_array((int) $method->payment_method_id, self::OFFLINE_METHODS, true)) {
-            // Online gateways (PayPal, SSLCommerz, Stripe) are ported in a later phase.
-            return back()->withErrors(['method' => $method->payment_method.' is not available yet in the new site.']);
+
+        if ($gateway = $this->online->gatewayForMethod($method)) {
+            if ($booking->balance <= 0.004) {
+                return redirect()->route('booking.show', $booking->booking_number)->with('status', 'This booking is already paid.');
+            }
+            try {
+                return redirect()->away($this->online->start($booking, $gateway));
+            } catch (\InvalidArgumentException|RuntimeException $e) {
+                return back()->withErrors(['method' => $e->getMessage()]);
+            }
         }
 
+        // Pay at the hotel / bank transfer: the booking stays pending until staff confirm it.
         $booking->details()->update(['payment_method' => $method->payment_method]);
+        $this->notifier->received($booking);
 
         return redirect()->route('booking.show', $booking->booking_number)
-            ->with('status', 'Your booking is confirmed. Payment: '.$method->payment_method.'.');
+            ->with('status', 'Thank you! We have received your booking. Payment: '.$method->payment_method.'.');
     }
 
     public function index()
@@ -106,6 +121,20 @@ class BookingController extends Controller
     public function show(string $booking)
     {
         return view('booking.show', ['booking' => $this->ownBooking($booking)]);
+    }
+
+    /** A guest may cancel their own booking while it is pending and nothing has been paid. */
+    public function cancel(string $booking)
+    {
+        $booking = $this->ownBooking($booking);
+
+        if ((string) $booking->bookingstatus !== '0' || (float) $booking->paid_amount > 0) {
+            return back()->withErrors(['booking' => 'This booking can no longer be cancelled online. Please contact the hotel.']);
+        }
+
+        $this->reservations->cancel($booking, null, 0, null, 'Cancelled by the guest');
+
+        return redirect()->route('booking.show', $booking->booking_number)->with('status', 'Your booking has been cancelled.');
     }
 
     public function invoice(string $booking)

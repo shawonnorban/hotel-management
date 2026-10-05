@@ -14,6 +14,9 @@ class Menu
     private const SCREENS = [
         ['Overview', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
         ['Front desk', 'Reservations', 'bi-calendar-check', 'admin.reservations.index', 'reservations.view'],
+        ['Administration', 'Roles & permissions', 'bi-shield-lock', 'admin.roles.index', 'roles.manage'],
+        ['Administration', 'Hotel settings', 'bi-gear', 'admin.settings.edit', 'settings.manage'],
+        ['Administration', 'Payment gateways', 'bi-credit-card', 'admin.gateways.index', 'settings.manage'],
         ['Accounting', 'Vouchers', 'bi-journal-text', 'admin.vouchers.index', 'accounts.view'],
         ['Accounting', 'Account ledger', 'bi-book', 'admin.accounting.ledger', 'accounts.view'],
         ['Accounting', 'Cash & bank book', 'bi-wallet2', 'admin.accounting.cash-book', 'accounts.view'],

@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([BaseDataSeeder::class, ChartOfAccountsSeeder::class, RolesAndPermissionsSeeder::class]);
+        $this->call([BaseDataSeeder::class, ChartOfAccountsSeeder::class, RolesAndPermissionsSeeder::class, PagesSeeder::class]);
 
         // First administrator for a brand-new installation. Change the password after signing in.
         if (! User::where('usertype', 1)->exists()) {

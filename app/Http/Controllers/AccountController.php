@@ -27,7 +27,7 @@ class AccountController extends Controller
             'address' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:100'],
             'country' => ['nullable', 'string', 'max:100'],
-            'current_password' => ['nullable', 'required_with:password', 'current_password:customer'],
+            'current_password' => ['nullable', 'required_with:password', fn ($attribute, $value, $fail) => Auth::guard('customer')->getProvider()->validateCredentials(Auth::guard('customer')->user(), ['password' => $value]) || $fail('The current password is incorrect.')],
             'password' => ['nullable', 'confirmed', Password::min(8)->letters()->numbers()],
         ]);
 

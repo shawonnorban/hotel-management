@@ -8,7 +8,7 @@
 <body class="d-flex flex-column min-vh-100">
 <nav class="navbar navbar-expand-lg site-nav sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="{{ route('home') }}"><i class="bi bi-building me-2"></i>{{ $hotelName }}</a>
+        <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">@if ($logo = \App\Support\Settings::get('logo'))<img src="{{ asset($logo) }}" alt="" style="height:32px" class="me-2">@else<i class="bi bi-building me-2"></i>@endif{{ $hotelName }}</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-label="Menu"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="siteNav">
             <ul class="navbar-nav me-auto ms-lg-4">
@@ -17,6 +17,7 @@
                 @foreach ($sitePages ?? [] as $navPage)
                     <li class="nav-item"><a class="nav-link {{ request()->is('page/'.$navPage->slug) ? 'active' : '' }}" href="{{ route('pages.show', $navPage->slug) }}">{{ $navPage->title }}</a></li>
                 @endforeach
+                <li class="nav-item"><a class="nav-link {{ request()->routeIs('gallery') ? 'active' : '' }}" href="{{ route('gallery') }}">Gallery</a></li>
                 <li class="nav-item"><a class="nav-link {{ request()->routeIs('contact*') ? 'active' : '' }}" href="{{ route('contact') }}">Contact</a></li>
             </ul>
             <div class="d-flex align-items-center gap-2">
@@ -50,6 +51,7 @@
             <div class="col-md-5">
                 <div class="h5 text-white"><i class="bi bi-building me-2"></i>{{ $hotelName }}</div>
                 <p class="small">{{ \App\Support\Settings::get('footer_text') ?: 'Comfortable rooms, warm service and an easy booking experience.' }}</p>
+                <form method="post" action="{{ route('subscribe') }}" class="d-flex gap-2" style="max-width:360px">@csrf<input type="text" name="website" class="d-none" tabindex="-1" autocomplete="off"><input type="email" name="email" class="form-control form-control-sm" placeholder="Your e-mail for offers" required><button class="btn btn-sm btn-primary" data-allow-multi>Subscribe</button></form>
             </div>
             <div class="col-6 col-md-3">
                 <div class="text-white fw-semibold mb-2">Explore</div>

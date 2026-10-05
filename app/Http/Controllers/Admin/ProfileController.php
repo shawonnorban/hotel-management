@@ -24,7 +24,7 @@ class ProfileController extends Controller
             'firstname' => ['required', 'string', 'max:50'],
             'lastname' => ['nullable', 'string', 'max:50'],
             'email' => ['required', 'email', 'max:100', Rule::unique('user', 'email')->ignore($user->id)],
-            'current_password' => ['nullable', 'required_with:password', 'current_password:admin'],
+            'current_password' => ['nullable', 'required_with:password', fn ($attribute, $value, $fail) => Auth::guard('admin')->getProvider()->validateCredentials(Auth::guard('admin')->user(), ['password' => $value]) || $fail('The current password is incorrect.')],
             'password' => ['nullable', 'confirmed', Password::min(8)->letters()->numbers()],
         ]);
 

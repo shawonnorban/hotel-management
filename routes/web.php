@@ -8,9 +8,11 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OnlinePaymentController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,6 +22,13 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->whereNumber('room')->name('rooms.show');
 
+// Payment provider callbacks: public, verified server-side (CSRF-exempt, see bootstrap/app.php).
+Route::match(['get', 'post'], '/payments/{driver}/return', [OnlinePaymentController::class, 'return'])->where('driver', 'stripe|paypal|sslcommerz')->name('payments.return');
+Route::match(['get', 'post'], '/payments/{driver}/cancel', [OnlinePaymentController::class, 'cancel'])->where('driver', 'stripe|paypal|sslcommerz')->name('payments.cancel');
+Route::post('/payments/{driver}/notify', [OnlinePaymentController::class, 'notify'])->where('driver', 'stripe|paypal|sslcommerz')->name('payments.notify');
+
+Route::get('/gallery', [SiteController::class, 'gallery'])->name('gallery');
+Route::post('/subscribe', [SiteController::class, 'subscribe'])->middleware('throttle:5,1')->name('subscribe');
 Route::get('/page/{slug}', [PageController::class, 'show'])->name('pages.show');
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'send'])->middleware('throttle:5,1')->name('contact.send');
@@ -45,6 +54,7 @@ Route::middleware('auth:customer')->group(function () {
     Route::post('/checkout/{booking}', [BookingController::class, 'pay'])->name('booking.pay');
     Route::get('/my-bookings', [BookingController::class, 'index'])->name('booking.index');
     Route::get('/my-bookings/{booking}', [BookingController::class, 'show'])->name('booking.show');
+    Route::post('/my-bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('booking.cancel');
     Route::get('/my-bookings/{booking}/invoice', [BookingController::class, 'invoice'])->name('booking.invoice');
 });
 
@@ -67,6 +77,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/', [Admin\DashboardController::class, 'index'])->middleware('can:dashboard.view')->name('dashboard');
+
+        Route::middleware('can:roles.manage')->group(function () {
+            Route::resource('roles', Admin\RoleController::class)->except('show');
+        });
+
+        Route::middleware('can:settings.manage')->group(function () {
+            Route::get('/settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
+            Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+            Route::put('/settings/mail', [Admin\SettingsController::class, 'updateMail'])->name('settings.mail');
+            Route::post('/settings/mail-test', [Admin\SettingsController::class, 'testMail'])->name('settings.mail-test');
+            Route::get('/settings/payment-gateways', [Admin\PaymentGatewayController::class, 'index'])->name('gateways.index');
+            Route::put('/settings/payment-gateways/{driver}', [Admin\PaymentGatewayController::class, 'update'])->where('driver', 'stripe|paypal|sslcommerz')->name('gateways.update');
+        });
 
         Route::prefix('reservations')->name('reservations.')->controller(Admin\ReservationController::class)->group(function () {
             Route::middleware('can:reservations.create')->group(function () {

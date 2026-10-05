@@ -140,14 +140,16 @@ class GuestBookingTest extends HotelTestCase
         $this->post('/book', $this->bookingPayload(['checkout' => now()->addDays(5)->toDateString()]))->assertSessionHasErrors('checkout');
     }
 
-    public function test_online_gateways_are_not_offered_yet(): void
+    public function test_methods_without_a_configured_gateway_are_pay_at_hotel_and_inactive_ones_are_rejected(): void
     {
         $this->actingAs($this->guest, 'customer');
         $this->post('/book', $this->bookingPayload());
         $booking = BookedInfo::firstOrFail();
 
-        $this->post('/checkout/'.$booking->booking_number, ['method' => 3])->assertSessionHasErrors('method');
+        // PayPal is switched on but has no credentials: it cannot be used online.
+        $this->post('/checkout/'.$booking->booking_number, ['method' => 3])->assertRedirect('/my-bookings/'.$booking->booking_number);
         $this->post('/checkout/'.$booking->booking_number, ['method' => 1])->assertSessionHasErrors('method'); // inactive
+        $this->post('/checkout/'.$booking->booking_number, ['method' => 99])->assertSessionHasErrors('method');
     }
 
     public function test_a_guest_cannot_see_someone_elses_booking(): void

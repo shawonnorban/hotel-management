@@ -12,7 +12,7 @@
                 <label class="border rounded-3 p-3 d-flex align-items-center gap-3" for="m{{ $method->payment_method_id }}" style="cursor:pointer">
                     <input class="form-check-input mt-0" type="radio" name="method" id="m{{ $method->payment_method_id }}" value="{{ $method->payment_method_id }}" @checked($loop->first) required>
                     <span class="fw-semibold">{{ $method->payment_method }}</span>
-                    <span class="ms-auto small text-body-secondary">{{ in_array((int) $method->payment_method_id, $offline) ? 'Pay at the hotel / by transfer' : 'Pay online now' }}</span>
+                    <span class="ms-auto small text-body-secondary">{{ $method->online ? 'Pay online now' : 'Pay at the hotel / by transfer' }}</span>
                 </label>
             @empty
                 <div class="alert alert-warning mb-0">No payment method is available right now. Please contact the hotel.</div>

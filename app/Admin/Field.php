@@ -28,6 +28,12 @@ class Field
     /** Shown in the table only; never rendered in the form or saved. */
     public bool $listOnly = false;
 
+    /** Not a column of the model: handed to Resource::afterSave() instead of being saved. */
+    public bool $virtual = false;
+
+    /** Computes the form value for an existing record (for virtual fields). */
+    public ?Closure $valueFrom = null;
+
     public ?string $prefix = null;
 
     public ?string $placeholder = null;
@@ -99,6 +105,15 @@ class Field
     public static function toggle(string $name, string $label): static
     {
         return static::make($name, $label, 'toggle')->default(1);
+    }
+
+    /** @param array<int|string,string>|Closure():array<int|string,string> $options */
+    public static function multiselect(string $name, string $label, array|Closure $options): static
+    {
+        $field = static::make($name, $label, 'multiselect');
+        $field->options = $options;
+
+        return $field;
     }
 
     public static function image(string $name, string $label): static
@@ -184,6 +199,14 @@ class Field
         return $this;
     }
 
+    public function virtual(?Closure $valueFrom = null): static
+    {
+        $this->virtual = true;
+        $this->valueFrom = $valueFrom;
+
+        return $this;
+    }
+
     public function prefix(string $text): static
     {
         $this->prefix = $text;
@@ -227,6 +250,7 @@ class Field
             'toggle' => ['boolean'],
             'image' => ['image', 'max:4096'],
             'select' => [],
+            'multiselect' => ['array'],
             default => ['string'],
         };
 

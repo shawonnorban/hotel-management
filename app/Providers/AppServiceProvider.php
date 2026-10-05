@@ -6,6 +6,7 @@ use App\Admin\Menu;
 use App\Auth\UpgradingUserProvider;
 use App\Models\Page;
 use App\Models\User;
+use App\Support\AppSettings;
 use App\Support\Settings;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        // Mail server chosen in the admin screen overrides .env (skipped before the table exists, e.g. during migrate).
+        rescue(fn () => AppSettings::applyMailConfig(), report: false);
 
         Auth::provider('upgrading', fn ($app, array $config) => new UpgradingUserProvider($app['hash'], $config['model']));
 

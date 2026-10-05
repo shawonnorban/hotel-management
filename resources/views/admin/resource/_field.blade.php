@@ -1,6 +1,6 @@
 @php
     $name = $field->name;
-    $value = old($name, $record ? $record->getAttribute($name) : $field->default);
+    $value = old($name, $record ? ($field->valueFrom ? ($field->valueFrom)($record) : $record->getAttribute($name)) : $field->default);
     $id = 'f_'.$name;
     $invalid = $errors->has($name) ? ' is-invalid' : '';
     $attrs = collect($field->attributes)->map(fn ($v, $k) => $k.'="'.e($v).'"')->implode(' ');
@@ -22,6 +22,13 @@
                 <option value="">— Select —</option>
                 @foreach ($field->resolveOptions() as $optValue => $optLabel)
                     <option value="{{ $optValue }}" @selected((string) $value === (string) $optValue)>{{ $optLabel }}</option>
+                @endforeach
+            </select>
+            @break
+        @case('multiselect')
+            <select id="{{ $id }}" name="{{ $name }}[]" class="form-select{{ $invalid }}" multiple data-search {!! $attrs !!}>
+                @foreach ($field->resolveOptions() as $optValue => $optLabel)
+                    <option value="{{ $optValue }}" @selected(in_array((string) $optValue, array_map('strval', (array) $value), true))>{{ $optLabel }}</option>
                 @endforeach
             </select>
             @break

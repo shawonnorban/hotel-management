@@ -63,7 +63,7 @@ class ResourceController extends Controller
         $data = $this->validated($request, $res, null);
         $data = $res->beforeSave($data, null);
 
-        $model->fill($data)->save();
+        $model->fill($this->columns($res, $data))->save();
         $res->afterSave($model, $data, true);
 
         return redirect()->route('admin.resource.index', $resource)->with('status', $res::$singular.' created.');
@@ -83,7 +83,7 @@ class ResourceController extends Controller
         $data = $this->validated($request, $res, $model);
         $data = $res->beforeSave($data, $model);
 
-        $model->fill($data)->save();
+        $model->fill($this->columns($res, $data))->save();
         $res->afterSave($model, $data, false);
 
         return redirect()->route('admin.resource.index', $resource)->with('status', $res::$singular.' updated.');
@@ -105,6 +105,14 @@ class ResourceController extends Controller
         }
 
         return redirect()->route('admin.resource.index', $resource)->with('status', $res::$singular.' deleted.');
+    }
+
+    /** Only the keys that are real columns (virtual fields go to afterSave only). */
+    private function columns(Resource $res, array $data): array
+    {
+        $virtual = collect($res->fields())->filter(fn (Field $f) => $f->virtual)->pluck('name')->all();
+
+        return array_diff_key($data, array_flip($virtual));
     }
 
     /** @return list<Field> */
@@ -138,6 +146,9 @@ class ResourceController extends Controller
         $rules = [];
         foreach ($this->formFields($res) as $field) {
             $rules[$field->name] = $field->validationRules($model, $table);
+            if ($field->type === 'multiselect') {
+                $rules[$field->name.'.*'] = [\Illuminate\Validation\Rule::in(array_keys($field->resolveOptions()))];
+            }
             if ($field->type === 'password' && $model) {
                 $rules[$field->name] = array_values(array_filter($rules[$field->name], fn ($r) => $r !== 'required'));
                 array_unshift($rules[$field->name], 'nullable');
@@ -173,7 +184,7 @@ class ResourceController extends Controller
                 continue;
             }
 
-            $data[$name] = $validated[$name] ?? null;
+            $data[$name] = $field->type === 'multiselect' ? array_values($validated[$name] ?? []) : ($validated[$name] ?? null);
         }
 
         return $data;
