@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legacy\Customerinfo;
+use App\Models\Customerinfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
@@ -43,7 +44,7 @@ class AuthController extends Controller
             'lastname' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customerinfo', 'email')],
             'phone' => ['required', 'string', 'max:30', Rule::unique('customerinfo', 'cust_phone')],
-            'password' => ['required', 'string', 'min:6', 'confirmed'],
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers()],
             'terms' => ['accepted'],
         ]);
 
@@ -53,8 +54,7 @@ class AuthController extends Controller
                 'lastname' => $data['lastname'],
                 'email' => strtolower($data['email']),
                 'cust_phone' => $data['phone'],
-                // Legacy-compatible MD5 so the guest can sign in on both apps until the CodeIgniter site is retired.
-                'pass' => md5($data['password']),
+                'pass' => Hash::make($data['password']),
                 'balance' => 0,
                 'active' => 1,
                 'signupdate' => now()->toDateString(),

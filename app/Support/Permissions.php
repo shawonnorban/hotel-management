@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Support;
+
+use App\Admin\ResourceRegistry;
+
+/** Every permission in the system and the default roles built from them. */
+class Permissions
+{
+    /** Non-CRUD permissions: name => description. */
+    public const EXTRA = [
+        'dashboard.view' => 'See the dashboard',
+        'reservations.view' => 'View reservations',
+        'reservations.create' => 'Create reservations',
+        'reservations.edit' => 'Edit reservations',
+        'reservations.status' => 'Confirm, check in, check out and cancel',
+        'reservations.payments' => 'Take payments',
+        'reports.view' => 'View reports',
+        'accounts.view' => 'View accounts',
+        'accounts.manage' => 'Post vouchers and manage the chart of accounts',
+        'settings.manage' => 'Change hotel settings',
+        'users.manage' => 'Manage staff accounts',
+        'roles.manage' => 'Manage roles and permissions',
+        'backup.manage' => 'Create and download backups',
+    ];
+
+    /** @return list<string> */
+    public static function all(): array
+    {
+        return array_values(array_unique(array_merge(array_keys(self::EXTRA), ResourceRegistry::permissions(), self::moduleCrud())));
+    }
+
+    /**
+     * Permission names granted to each default role. "*" patterns match by prefix.
+     *
+     * @return array<string,list<string>>
+     */
+    public static function roles(): array
+    {
+        return [
+            'Super Admin' => [],
+            'Manager' => ['dashboard.', 'reservations.', 'reports.', 'room-types.', 'rooms.', 'floors.', 'bed-types.', 'size-units.', 'facility-types.', 'facilities.', 'room-facilities.', 'room-images.', 'offers.', 'services.', 'taxes.', 'currencies.', 'promo-codes.', 'wake-up-calls.', 'customers.', 'star-classes.', 'booking-types.', 'accounts.view'],
+            'Front Desk' => ['dashboard.view', 'reservations.view', 'reservations.create', 'reservations.edit', 'reservations.status', 'reservations.payments', 'customers.view', 'customers.create', 'customers.edit', 'wake-up-calls.', 'rooms.view', 'room-types.view', 'offers.view', 'promo-codes.view'],
+            'Accountant' => ['dashboard.view', 'reservations.view', 'reservations.payments', 'reports.view', 'accounts.', 'taxes.', 'currencies.', 'payment-methods.view'],
+            'HR Manager' => ['dashboard.view', 'hr-'],
+            'Store Keeper' => ['dashboard.view', 'inv-', 'reports.view'],
+        ];
+    }
+
+    /** Permission names created by module resources registered later (slugs prefixed hr-/inv-/...). */
+    private static function moduleCrud(): array
+    {
+        return [];
+    }
+
+    /** @return list<string> permission names a role pattern list expands to */
+    public static function expand(array $patterns): array
+    {
+        $all = self::all();
+
+        return array_values(array_filter($all, function ($name) use ($patterns) {
+            foreach ($patterns as $pattern) {
+                if ($name === $pattern || (str_ends_with($pattern, '.') || str_ends_with($pattern, '-')) && str_starts_with($name, $pattern)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
+    }
+}

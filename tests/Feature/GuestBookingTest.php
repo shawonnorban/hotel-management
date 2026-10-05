@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Legacy\BookedInfo;
-use App\Models\Legacy\Customerinfo;
+use App\Models\BookedInfo;
+use App\Models\Customerinfo;
 
 class GuestBookingTest extends HotelTestCase
 {
@@ -14,7 +14,7 @@ class GuestBookingTest extends HotelTestCase
         $this->get('/rooms/'.$this->room->roomid)->assertOk()->assertSee('Deluxe');
     }
 
-    public function test_guest_can_register_and_sign_in_with_legacy_compatible_password(): void
+    public function test_guest_can_register_with_a_securely_hashed_password(): void
     {
         $this->post('/register', [
             'firstname' => 'New', 'lastname' => 'Guest', 'email' => 'New@Example.com', 'phone' => '0180000002',
@@ -22,7 +22,8 @@ class GuestBookingTest extends HotelTestCase
         ])->assertRedirect('/');
 
         $guest = Customerinfo::where('email', 'new@example.com')->firstOrFail();
-        $this->assertSame(md5('password1'), $guest->pass);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('password1', $guest->pass));
+        $this->assertNotSame(md5('password1'), $guest->pass);
         $this->assertAuthenticatedAs($guest, 'customer');
     }
 
@@ -34,13 +35,18 @@ class GuestBookingTest extends HotelTestCase
         ])->assertSessionHasErrors(['email', 'phone']);
     }
 
-    public function test_legacy_md5_guest_can_sign_in_and_wrong_password_fails(): void
+    public function test_imported_md5_guest_can_sign_in_and_the_hash_is_upgraded(): void
     {
         $this->post('/login', ['email' => 'ada@example.com', 'password' => 'wrong'])->assertSessionHasErrors('email');
         $this->assertGuest('customer');
+        $this->assertSame(md5('secret12'), $this->guest->fresh()->pass);
 
         $this->post('/login', ['email' => 'ada@example.com', 'password' => 'secret12'])->assertRedirect('/');
         $this->assertAuthenticatedAs($this->guest, 'customer');
+
+        $upgraded = $this->guest->fresh()->pass;
+        $this->assertNotSame(md5('secret12'), $upgraded);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('secret12', $upgraded));
     }
 
     public function test_deactivated_guest_cannot_sign_in(): void

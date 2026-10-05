@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Legacy\BookedInfo;
+use App\Models\BookedInfo;
 
 class AdminTest extends HotelTestCase
 {
@@ -16,7 +16,7 @@ class AdminTest extends HotelTestCase
 
     public function test_admin_area_requires_staff_sign_in(): void
     {
-        foreach (['/admin', '/admin/reservations', '/admin/rooms'] as $url) {
+        foreach (['/admin', '/admin/reservations', '/admin/rooms', '/admin/customers'] as $url) {
             $this->get($url)->assertRedirect('/admin/login');
         }
     }
@@ -33,6 +33,7 @@ class AdminTest extends HotelTestCase
 
         $this->assertAuthenticatedAs($this->staff, 'admin');
         $this->assertNotNull($this->staff->fresh()->last_login);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('staffpass', $this->staff->fresh()->password), 'MD5 hash should be upgraded on login');
     }
 
     public function test_disabled_or_non_staff_accounts_cannot_sign_in(): void
@@ -55,7 +56,7 @@ class AdminTest extends HotelTestCase
         $this->get('/admin/reservations?q='.$booking->booking_number)->assertOk()->assertSee($booking->booking_number);
         $this->get('/admin/reservations?status=5')->assertOk()->assertDontSee($booking->booking_number);
         $this->get('/admin/reservations/'.$booking->booking_number)->assertOk()->assertSee('Ada Guest');
-        $this->get('/admin/rooms')->assertOk()->assertSee('101, 102');
+        $this->get('/admin/rooms')->assertOk()->assertSee('101')->assertSee('102');
     }
 
     public function test_search_treats_wildcards_literally(): void
@@ -63,7 +64,7 @@ class AdminTest extends HotelTestCase
         $this->makeBooking();
         $this->actingAs($this->staff, 'admin');
 
-        $this->get('/admin/reservations?q=%25')->assertOk()->assertSee('No reservations.');
+        $this->get('/admin/reservations?q=%25')->assertOk()->assertSee('No reservations');
     }
 
     public function test_status_follows_the_reservation_lifecycle(): void

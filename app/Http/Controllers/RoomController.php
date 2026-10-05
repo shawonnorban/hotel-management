@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legacy\Roomdetails;
-use App\Models\Legacy\RoomImage;
+use App\Models\Roomdetails;
+use App\Models\RoomImage;
 use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -65,8 +65,15 @@ class RoomController extends Controller
             $quote = $this->booking->quote($room, $checkin, $checkout, (int) ($search['rooms'] ?? 1));
         }
 
+        $facilities = \App\Models\RoomfailityRefAccomodation::query()
+            ->where('room_id', $room->roomid)
+            ->join('roomfacilitydetails', 'roomfacilitydetails.facilityid', '=', 'roomfaility_ref_accomodation.facilityid')
+            ->orderBy('roomfacilitydetails.facilitytitle')
+            ->pluck('roomfacilitydetails.facilitytitle');
+
         return view('rooms.show', [
             'room' => $room,
+            'facilities' => $facilities,
             'images' => RoomImage::where('room_id', $room->roomid)->orderBy('room_img_id')->pluck('room_imagename'),
             'search' => $search,
             'quote' => $quote,

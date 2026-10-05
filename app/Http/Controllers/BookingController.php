@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legacy\BookedInfo;
-use App\Models\Legacy\PaymentMethod;
-use App\Models\Legacy\Roomdetails;
+use App\Models\BookedInfo;
+use App\Models\PaymentMethod;
+use App\Models\Roomdetails;
 use App\Services\BookingService;
+use App\Services\InvoiceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,21 +31,32 @@ class BookingController extends Controller
             'children' => ['nullable', 'integer', 'min:0', 'max:20'],
             'guest' => ['nullable', 'string', 'max:255'],
             'special' => ['nullable', 'string', 'max:1000'],
+            'promo' => ['nullable', 'string', 'max:50'],
         ]);
 
         $room = Roomdetails::where('roomactive', 1)->findOrFail($data['room']);
+        $checkin = Carbon::parse($data['checkin']);
+
+        $promo = null;
+        if (! empty($data['promo'])) {
+            $promo = $this->booking->findPromo($data['promo'], $room, $checkin);
+            if (! $promo) {
+                return back()->withInput()->withErrors(['promo' => 'That promo code is not valid for this room and stay.']);
+            }
+        }
 
         try {
             $booking = $this->booking->createBooking(
                 Auth::guard('customer')->user(),
                 $room,
-                Carbon::parse($data['checkin']),
+                $checkin,
                 Carbon::parse($data['checkout']),
                 (int) $data['rooms'],
                 (int) $data['adults'],
                 (int) ($data['children'] ?? 0),
                 $data['guest'] ?? null,
                 $data['special'] ?? null,
+                $promo,
             );
         } catch (InvalidArgumentException|RuntimeException $e) {
             return back()->withInput()->withErrors(['booking' => $e->getMessage()]);
@@ -94,6 +106,13 @@ class BookingController extends Controller
     public function show(string $booking)
     {
         return view('booking.show', ['booking' => $this->ownBooking($booking)]);
+    }
+
+    public function invoice(string $booking)
+    {
+        $booking = $this->ownBooking($booking);
+
+        return $this->invoices->pdf($booking)->download('invoice-'.$booking->booking_number.'.pdf');
     }
 
     private function ownBooking(string $number): BookedInfo

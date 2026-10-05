@@ -10,11 +10,11 @@
     </div></div></div>
     <div class="col-lg-5"><div class="card"><div class="card-body">
         <h2 class="h6">Change status</h2>
-        @forelse (\App\Models\Legacy\BookedInfo::TRANSITIONS[(string) $booking->bookingstatus] ?? [] as $to)
+        @forelse (\App\Models\BookedInfo::TRANSITIONS[(string) $booking->bookingstatus] ?? [] as $to)
             <form method="post" action="{{ route('admin.reservations.status', $booking->booking_number) }}" class="d-inline">
                 @csrf @method('PATCH')
                 <input type="hidden" name="status" value="{{ $to }}">
-                <button class="btn btn-sm {{ $to === '1' ? 'btn-outline-danger' : 'btn-primary' }}">Mark {{ \App\Models\Legacy\BookedInfo::STATUS_LABELS[$to] }}</button>
+                <button class="btn btn-sm {{ $to === '1' ? 'btn-outline-danger' : 'btn-primary' }}">Mark {{ \App\Models\BookedInfo::STATUS_LABELS[$to] }}</button>
             </form>
         @empty
             <p class="text-muted mb-0">No further changes are possible.</p>

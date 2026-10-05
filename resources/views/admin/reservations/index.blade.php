@@ -7,7 +7,7 @@
     <div class="col-md-3">
         <select name="status" class="form-select">
             <option value="">Any status</option>
-            @foreach (\App\Models\Legacy\BookedInfo::STATUS_LABELS as $code => $label)
+            @foreach (\App\Models\BookedInfo::STATUS_LABELS as $code => $label)
                 <option value="{{ $code }}" @selected(($filters['status'] ?? '') !== '' && (string) ($filters['status'] ?? '') === (string) $code)>{{ $label }}</option>
             @endforeach
         </select>

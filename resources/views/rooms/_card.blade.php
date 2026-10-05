@@ -1,14 +1,21 @@
-<div class="col-md-4">
-    <div class="card h-100 shadow-sm">
-        <img src="{{ asset($image ?: 'assets/img/room_search.png') }}" class="card-img-top" alt="{{ $room->roomtype }}" style="height:200px;object-fit:cover">
+@php($stay = collect($search ?? [])->only(['checkin', 'checkout', 'adults', 'children'])->filter()->all())
+<div class="col-md-6 col-lg-4">
+    <div class="card room-card h-100">
+        <a href="{{ route('rooms.show', ['room' => $room->roomid] + $stay) }}"><img src="{{ asset($image ?: 'assets/img/room_search.png') }}" class="thumb" alt="{{ $room->roomtype }}" loading="lazy"></a>
         <div class="card-body d-flex flex-column">
-            <h3 class="h5 card-title">{{ $room->roomtype }}</h3>
-            <p class="card-text text-muted small mb-1">Sleeps {{ $room->capacity }} · {{ $room->roomsize }} {{ $room->roomsizemesurement }}</p>
-            <p class="card-text fw-bold">{{ number_format($room->rate, 2) }} <span class="text-muted fw-normal">/ night</span></p>
+            <div class="d-flex justify-content-between align-items-start gap-2">
+                <h3 class="h5 mb-1">{{ $room->roomtype }}</h3>
+                <div class="text-end"><span class="price">{{ \App\Support\Money::format($room->rate) }}</span><div class="small text-body-secondary">per night</div></div>
+            </div>
+            <div class="small text-body-secondary mb-3 d-flex flex-wrap gap-3">
+                <span><i class="bi bi-people me-1"></i>{{ $room->capacity }} guests</span>
+                <span><i class="bi bi-aspect-ratio me-1"></i>{{ $room->size_label }}</span>
+                @if ($room->bedType)<span><i class="bi bi-moon-stars me-1"></i>{{ $room->bedsno }} {{ $room->bedType->bedstypetitle }}</span>@endif
+            </div>
             @isset($availableCount)
-                <p class="small {{ $availableCount > 0 ? 'text-success' : 'text-danger' }}">{{ $availableCount > 0 ? $availableCount.' room(s) available' : 'Not available for these dates' }}</p>
+                <div class="small mb-3 {{ $availableCount > 0 ? 'text-success' : 'text-danger' }}"><i class="bi {{ $availableCount > 0 ? 'bi-check-circle' : 'bi-x-circle' }} me-1"></i>{{ $availableCount > 0 ? $availableCount.' room(s) available for your dates' : 'Not available for your dates' }}</div>
             @endisset
-            <a class="btn btn-outline-primary mt-auto" href="{{ route('rooms.show', array_filter(['room' => $room->roomid] + ($search ?? []))) }}">View &amp; book</a>
+            <a class="btn btn-primary mt-auto" href="{{ route('rooms.show', ['room' => $room->roomid] + $stay) }}">View &amp; book</a>
         </div>
     </div>
 </div>

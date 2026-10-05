@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Legacy\BookedInfo;
+use App\Models\BookedInfo;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller

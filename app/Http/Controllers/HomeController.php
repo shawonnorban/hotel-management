@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Legacy\Roomdetails;
-use App\Models\Legacy\RoomImage;
+use App\Models\Roomdetails;
+use App\Models\RoomImage;
 use Illuminate\Support\Collection;
 
 class HomeController extends Controller
