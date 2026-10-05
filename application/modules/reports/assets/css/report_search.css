@@ -1,7 +1,0 @@
-@media print {
-
-    .btn-sm.prints,
-    .btn-sm.prints * {
-        display: none !important;
-    }
-}

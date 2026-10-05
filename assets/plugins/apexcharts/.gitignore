@@ -1,4 +1,0 @@
-node_modules/
-tests/e2e/snapshots/*.png
-issues/
-.DS_Store
