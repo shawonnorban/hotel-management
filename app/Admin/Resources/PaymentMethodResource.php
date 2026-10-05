@@ -4,6 +4,7 @@ namespace App\Admin\Resources;
 
 use App\Admin\Field;
 use App\Admin\Resource;
+use App\Models\LedgerAccount;
 use App\Models\PaymentMethod;
 
 class PaymentMethodResource extends Resource
@@ -26,6 +27,7 @@ class PaymentMethodResource extends Resource
     {
         return [
             Field::text('payment_method', 'Name')->required()->rules('max:100')->unique()->listed(),
+            Field::select('ledger_account_id', 'Money is received into', fn () => LedgerAccount::where('is_cash', true)->where('is_group', false)->orderBy('code')->get()->mapWithKeys(fn ($a) => [$a->id => $a->label])->all())->required()->help('The cash, bank or gateway account that payments by this method are posted to.'),
             Field::toggle('is_active', 'Offered to guests')->listed(),
         ];
     }

@@ -66,30 +66,4 @@ class AdminTest extends HotelTestCase
 
         $this->get('/admin/reservations?q=%25')->assertOk()->assertSee('No reservations');
     }
-
-    public function test_status_follows_the_reservation_lifecycle(): void
-    {
-        $booking = $this->makeBooking();
-        $this->actingAs($this->staff, 'admin');
-        $url = '/admin/reservations/'.$booking->booking_number.'/status';
-
-        // Cannot skip straight to check-out.
-        $this->patch($url, ['status' => '5'])->assertSessionHasErrors('status');
-
-        foreach (['2', '4', '5'] as $status) {
-            $this->patch($url, ['status' => $status])->assertSessionHasNoErrors();
-            $this->assertSame($status, (string) $booking->fresh()->bookingstatus);
-        }
-
-        // Finished bookings are final.
-        $this->patch($url, ['status' => '1'])->assertSessionHasErrors('status');
-    }
-
-    public function test_status_rejects_unknown_values(): void
-    {
-        $booking = $this->makeBooking();
-        $this->actingAs($this->staff, 'admin');
-
-        $this->patch('/admin/reservations/'.$booking->booking_number.'/status', ['status' => '9'])->assertSessionHasErrors('status');
-    }
 }

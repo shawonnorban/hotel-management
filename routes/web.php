@@ -68,12 +68,34 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/', [Admin\DashboardController::class, 'index'])->middleware('can:dashboard.view')->name('dashboard');
 
-        Route::middleware('can:reservations.view')->group(function () {
-            Route::get('/reservations', [Admin\ReservationController::class, 'index'])->name('reservations.index');
-            Route::get('/reservations/{booking}', [Admin\ReservationController::class, 'show'])->name('reservations.show');
+        Route::prefix('reservations')->name('reservations.')->controller(Admin\ReservationController::class)->group(function () {
+            Route::middleware('can:reservations.create')->group(function () {
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/quote', 'quote')->name('quote');
+            });
+            Route::middleware('can:reservations.view')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/{booking}', 'show')->name('show');
+                Route::get('/{booking}/invoice', 'invoice')->name('invoice');
+            });
+            Route::middleware('can:reservations.edit')->group(function () {
+                Route::get('/{booking}/edit', 'edit')->name('edit');
+                Route::put('/{booking}', 'update')->name('update');
+                Route::post('/{booking}/charges', 'storeCharge')->name('charges.store');
+                Route::delete('/{booking}/charges/{charge}', 'destroyCharge')->name('charges.destroy');
+            });
+            Route::middleware('can:reservations.status')->group(function () {
+                Route::post('/{booking}/confirm', 'confirm')->name('confirm');
+                Route::post('/{booking}/check-in', 'checkIn')->name('check-in');
+                Route::post('/{booking}/check-out', 'checkOut')->name('check-out');
+                Route::post('/{booking}/cancel', 'cancel')->name('cancel');
+            });
+            Route::middleware('can:reservations.payments')->group(function () {
+                Route::post('/{booking}/payments', 'storePayment')->name('payments.store');
+                Route::post('/{booking}/refunds', 'storeRefund')->name('refunds.store');
+            });
         });
-        Route::patch('/reservations/{booking}/status', [Admin\ReservationController::class, 'updateStatus'])
-            ->middleware('can:reservations.status')->name('reservations.status');
 
         Route::prefix('accounting')->group(function () {
             Route::middleware('can:accounts.view')->group(function () {

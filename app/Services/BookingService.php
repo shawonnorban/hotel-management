@@ -33,12 +33,13 @@ class BookingService
     }
 
     /** @return list<string> Room numbers of this room type that are free for the period. */
-    public function availableRoomNumbers(int $roomId, Carbon $checkin, Carbon $checkout): array
+    public function availableRoomNumbers(int $roomId, Carbon $checkin, Carbon $checkout, ?int $ignoreBookingId = null): array
     {
         $assigned = TblRoomnofloorassign::where('roomid', $roomId)->pluck('roomno')->map(fn ($n) => (string) $n)->all();
 
         $taken = BookedInfo::query()
             ->whereNotIn('bookingstatus', self::FREED_STATUSES)
+            ->when($ignoreBookingId, fn ($q) => $q->where('bookedid', '!=', $ignoreBookingId))
             ->where('checkindate', '<', $checkout)
             ->where('checkoutdate', '>', $checkin)
             ->pluck('room_no')
@@ -138,6 +139,8 @@ class BookingService
         ?string $guestName = null,
         ?string $specialRequest = null,
         ?Promocode $promo = null,
+        string $status = '0',
+        string $source = 'website',
     ): BookedInfo {
         if ($checkout->lte($checkin)) {
             throw new InvalidArgumentException('Check-out must be after check-in.');
@@ -146,7 +149,7 @@ class BookingService
             throw new InvalidArgumentException('The selected rooms cannot accommodate this many guests.');
         }
 
-        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $specialRequest, $promo) {
+        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $specialRequest, $promo, $status, $source) {
             // Serialise concurrent bookings of the same hotel so two guests cannot get the same room number.
             BookedInfo::query()->lockForUpdate()->orderByDesc('bookedid')->first();
 
@@ -187,7 +190,8 @@ class BookingService
                 'checkindate' => $checkin,
                 'checkoutdate' => $checkout,
                 'cutomerid' => $guest->customerid,
-                'bookingstatus' => '0',
+                'bookingstatus' => $status,
+                'source' => $source,
             ]);
 
             $zeros = $repeat(0);
@@ -206,6 +210,70 @@ class BookingService
             ]);
 
             return $booking;
+        });
+    }
+
+    /**
+     * Change the stay of a booking that has not been checked in yet (dates, number of rooms, party size).
+     * Room numbers are re-allocated, keeping the booking's current rooms where they are still free.
+     */
+    public function modify(
+        BookedInfo $booking,
+        Roomdetails $room,
+        Carbon $checkin,
+        Carbon $checkout,
+        int $rooms,
+        int $adults,
+        int $children,
+        ?Promocode $promo = null,
+    ): BookedInfo {
+        if (! in_array((string) $booking->bookingstatus, ['0', '2'], true)) {
+            throw new InvalidArgumentException('Only pending or confirmed bookings can be changed.');
+        }
+        if ($checkout->lte($checkin)) {
+            throw new InvalidArgumentException('Check-out must be after check-in.');
+        }
+        if ($adults + $children > max(1, (int) $room->capacity) * $rooms) {
+            throw new InvalidArgumentException('The selected rooms cannot accommodate this many guests.');
+        }
+
+        return DB::transaction(function () use ($booking, $room, $checkin, $checkout, $rooms, $adults, $children, $promo) {
+            BookedInfo::query()->lockForUpdate()->orderByDesc('bookedid')->first();
+            $booking = BookedInfo::findOrFail($booking->bookedid);
+
+            $free = $this->availableRoomNumbers((int) $room->roomid, $checkin, $checkout, (int) $booking->bookedid);
+            if (count($free) < $rooms) {
+                throw new RuntimeException('Sorry, the requested number of rooms is not available for those dates.');
+            }
+
+            // Prefer the rooms the guest already holds.
+            $current = array_filter(explode(',', (string) $booking->room_no));
+            $keep = array_values(array_intersect($current, $free));
+            $roomNumbers = array_slice(array_values(array_unique(array_merge($keep, $free))), 0, $rooms);
+
+            $quote = $this->quote($room, $checkin, $checkout, $rooms, $promo);
+            $perRoom = fn (int $total) => implode(',', array_map(fn ($i) => intdiv($total, $rooms) + ($i < $total % $rooms ? 1 : 0), range(0, $rooms - 1)));
+            $repeat = fn ($value) => implode(',', array_fill(0, $rooms, $value));
+
+            $booking->update([
+                'roomid' => $repeat($room->roomid),
+                'nuofpeople' => $perRoom($adults),
+                'children' => $perRoom($children),
+                'total_room' => $rooms,
+                'room_no' => implode(',', $roomNumbers),
+                'roomrate' => $repeat($quote['rate']),
+                'total_price' => round($quote['total'] + (float) $booking->extras_amount, 2),
+                'subtotal' => $quote['subtotal'],
+                'discount_amount' => $quote['discount'],
+                'tax_amount' => $quote['tax'],
+                'service_amount' => $quote['service'],
+                'offer_discount' => $perRoom((int) round($quote['discount'])),
+                'promocode' => $promo?->promocode ?? $booking->promocode,
+                'checkindate' => $checkin,
+                'checkoutdate' => $checkout,
+            ]);
+
+            return $booking->fresh();
         });
     }
 }

@@ -4,19 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TblGuestpayments extends Model
+class FolioCharge extends Model
 {
-    protected $table = 'tbl_guestpayments';
-
-    protected $primaryKey = 'payid';
-
-    public $timestamps = false;
-
     protected $guarded = [];
 
     protected function casts(): array
     {
-        return ['paydate' => 'datetime', 'paymentamount' => 'decimal:2'];
+        return ['amount' => 'decimal:2', 'charged_on' => 'date'];
     }
 
     public function booking()

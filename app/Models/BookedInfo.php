@@ -41,6 +41,7 @@ class BookedInfo extends Model
             'discount_amount' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'service_amount' => 'decimal:2',
+            'extras_amount' => 'decimal:2',
         ];
     }
 
@@ -68,7 +69,28 @@ class BookedInfo extends Model
 
     public function payments()
     {
-        return $this->hasMany(TblGuestpayments::class, 'bookedid', 'bookedid');
+        return $this->hasMany(TblGuestpayments::class, 'bookedid', 'bookedid')->orderBy('payid');
+    }
+
+    public function charges()
+    {
+        return $this->hasMany(FolioCharge::class, 'bookedid', 'bookedid')->orderBy('id');
+    }
+
+    public function events()
+    {
+        return $this->hasMany(BookingEvent::class, 'bookedid', 'bookedid')->orderByDesc('id');
+    }
+
+    /** Is the stay over (revenue has been recognised)? */
+    public function getIsClosedAttribute(): bool
+    {
+        return (string) $this->bookingstatus === '5';
+    }
+
+    public function getIsOpenAttribute(): bool
+    {
+        return in_array((string) $this->bookingstatus, ['0', '2', '4'], true);
     }
 
     public function getBalanceAttribute(): float

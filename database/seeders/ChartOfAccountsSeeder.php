@@ -35,6 +35,7 @@ class ChartOfAccountsSeeder extends Seeder
         '4100' => ['Room revenue', 'income', '4000', false, 'room_revenue'],
         '4200' => ['Service charge income', 'income', '4000', false, 'service_income'],
         '4300' => ['Other income', 'income', '4000', false, 'other_income'],
+        '4400' => ['Extra services revenue', 'income', '4000', false, 'extras_revenue'],
         '5000' => ['Expenses', 'expense', null, true],
         '5100' => ['Consumables & supplies', 'expense', '5000', false, 'consumables'],
         '5200' => ['Salaries & wages', 'expense', '5000', false, 'salary_expense'],
@@ -61,6 +62,22 @@ class ChartOfAccountsSeeder extends Seeder
                 'is_cash' => $row[5] ?? false,
             ]);
             $ids[$code] = $account->id;
+        }
+
+        $this->mapPaymentMethods();
+    }
+
+    /** Point payment methods at the account their money lands in (only where none is chosen yet). */
+    private function mapPaymentMethods(): void
+    {
+        $map = ['Cash Payment' => 'cash', 'Bank Payment' => 'bank', 'Card Payment' => 'bank', 'Paypal' => 'online', 'SSLCommerz' => 'online', 'Stripe' => 'online'];
+
+        foreach (\App\Models\PaymentMethod::whereNull('ledger_account_id')->get() as $method) {
+            $key = $map[$method->payment_method] ?? 'cash';
+            $account = LedgerAccount::where('system_key', $key)->first();
+            if ($account) {
+                $method->update(['ledger_account_id' => $account->id]);
+            }
         }
     }
 }

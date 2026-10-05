@@ -13,4 +13,9 @@ class PaymentMethod extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    public function ledgerAccount()
+    {
+        return $this->belongsTo(LedgerAccount::class, 'ledger_account_id');
+    }
 }
