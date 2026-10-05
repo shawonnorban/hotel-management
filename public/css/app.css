@@ -99,7 +99,7 @@ h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
 
 /* ---------- Auth screens ---------- */
 .auth-wrap { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; }
-.auth-art { background: linear-gradient(160deg, rgba(11, 31, 42, .82), rgba(15, 118, 110, .72)), url('../assets/img/Home-page/slider.png') center/cover; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; padding: 3rem; }
+.auth-art { background: radial-gradient(700px 400px at 100% 0, rgba(184, 137, 59, .35), transparent 60%), linear-gradient(160deg, #082530, #0b4a52 60%, #0f766e); color: #fff; display: flex; flex-direction: column; justify-content: flex-end; padding: 3rem; }
 .auth-art h2 { font-weight: 700; font-size: 2.2rem; }
 .auth-form { display: grid; place-items: center; padding: 2rem; background: var(--bs-body-bg); }
 .auth-card { width: 100%; max-width: 400px; }
@@ -110,7 +110,9 @@ h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
 [data-bs-theme="dark"] .site-nav { background: rgba(11, 19, 32, .9); }
 .site-nav .navbar-brand { font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 1.35rem; color: var(--brand); }
 .site-nav .nav-link { font-weight: 500; }
-.hero { position: relative; color: #fff; background: linear-gradient(120deg, rgba(8, 28, 38, .78), rgba(15, 118, 110, .45)), var(--hero-image, url('../assets/img/Home-page/slider.png')) center/cover no-repeat; padding: 6.5rem 0 7.5rem; }
+.hero { position: relative; color: #fff; padding: 6.5rem 0 7.5rem; overflow: hidden; background: radial-gradient(1200px 500px at 85% -10%, rgba(184, 137, 59, .35), transparent 60%), radial-gradient(900px 500px at 0% 110%, rgba(45, 212, 191, .25), transparent 55%), linear-gradient(135deg, #082530 0%, #0b4a52 55%, #0f766e 100%); }
+.hero::after { content: ''; position: absolute; inset: 0; background-image: radial-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px); background-size: 22px 22px; pointer-events: none; }
+.hero > .container { position: relative; z-index: 1; }
 .hero h1 { font-family: Georgia, "Times New Roman", serif; font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 700; max-width: 18ch; }
 .hero .lead { max-width: 52ch; opacity: .92; }
 .search-card { margin-top: -3.5rem; position: relative; z-index: 5; box-shadow: var(--shadow-md); border: 0; }

@@ -1,0 +1,14 @@
+<form method="get" class="card mb-4 no-print"><div class="card-body row g-3 align-items-end">
+    {{ $slot ?? '' }}
+    @isset($asOf)
+        <div class="col-md-3"><label class="form-label small fw-semibold">As at</label><input type="text" name="as_of" class="form-control" data-date value="{{ $asOf->format('Y-m-d') }}"></div>
+    @else
+        <div class="col-md-3"><label class="form-label small fw-semibold">From</label><input type="text" name="from" class="form-control" data-date value="{{ $from->format('Y-m-d') }}"></div>
+        <div class="col-md-3"><label class="form-label small fw-semibold">To</label><input type="text" name="to" class="form-control" data-date value="{{ $to->format('Y-m-d') }}"></div>
+    @endisset
+    <div class="col-auto"><button class="btn btn-primary">Show</button></div>
+    <div class="col-auto ms-auto d-flex gap-2">
+        @if ($csv ?? false)<a class="btn btn-outline-secondary" href="{{ request()->fullUrlWithQuery(['export' => 'csv']) }}"><i class="bi bi-download me-1"></i>CSV</a>@endif
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
+    </div>
+</div></form>

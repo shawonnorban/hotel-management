@@ -12,11 +12,18 @@ class Menu
      * Resource screens are added automatically from the registry.
      */
     private const SCREENS = [
-        ['Overview', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', null],
+        ['Overview', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
+        ['Front desk', 'Reservations', 'bi-calendar-check', 'admin.reservations.index', 'reservations.view'],
+        ['Accounting', 'Vouchers', 'bi-journal-text', 'admin.vouchers.index', 'accounts.view'],
+        ['Accounting', 'Account ledger', 'bi-book', 'admin.accounting.ledger', 'accounts.view'],
+        ['Accounting', 'Cash & bank book', 'bi-wallet2', 'admin.accounting.cash-book', 'accounts.view'],
+        ['Accounting', 'Trial balance', 'bi-calculator', 'admin.accounting.trial-balance', 'accounts.view'],
+        ['Accounting', 'Income statement', 'bi-graph-up-arrow', 'admin.accounting.income-statement', 'accounts.view'],
+        ['Accounting', 'Balance sheet', 'bi-bar-chart-steps', 'admin.accounting.balance-sheet', 'accounts.view'],
     ];
 
     /** Order in which groups appear in the sidebar. */
-    private const GROUP_ORDER = ['Overview', 'Front desk', 'Hotel setup', 'Guests & sales', 'Accounting', 'Purchasing', 'Human resources', 'Reports', 'Administration'];
+    private const GROUP_ORDER = ['Overview', 'Front desk', 'Hotel setup', 'Guests & sales', 'Accounting', 'Purchasing', 'Human resources', 'Reports', 'Website', 'Administration'];
 
     /** @var list<array{0:string,1:string,2:string,3:string,4:?string}> */
     private static array $extra = [];
@@ -36,7 +43,7 @@ class Menu
             if ($permission && ! $user?->can($permission)) {
                 continue;
             }
-            $items[$group][] = ['label' => $label, 'icon' => $icon, 'url' => route($route), 'active' => request()->routeIs($route.'*')];
+            $items[$group][] = ['label' => $label, 'icon' => $icon, 'url' => route($route), 'active' => request()->routeIs(str_ends_with($route, '.index') ? substr($route, 0, -5).'*' : $route.'*')];
         }
 
         foreach (ResourceRegistry::all() as $slug => $class) {
@@ -51,7 +58,8 @@ class Menu
             ];
         }
 
-        uksort($items, fn ($a, $b) => (array_search($a, self::GROUP_ORDER) ?: 99) <=> (array_search($b, self::GROUP_ORDER) ?: 99));
+        $rank = fn ($group) => ($i = array_search($group, self::GROUP_ORDER, true)) === false ? 99 : $i;
+        uksort($items, fn ($a, $b) => $rank($a) <=> $rank($b));
 
         return $items;
     }

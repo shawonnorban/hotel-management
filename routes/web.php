@@ -2,6 +2,7 @@
 
 use App\Admin\ResourceRegistry;
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\Admin\Accounting;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BookingController;
@@ -73,6 +74,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
         });
         Route::patch('/reservations/{booking}/status', [Admin\ReservationController::class, 'updateStatus'])
             ->middleware('can:reservations.status')->name('reservations.status');
+
+        Route::prefix('accounting')->group(function () {
+            Route::middleware('can:accounts.view')->group(function () {
+                Route::get('/vouchers', [Accounting\VoucherController::class, 'index'])->name('vouchers.index');
+                Route::get('/ledger', [Accounting\AccountingReportController::class, 'ledger'])->name('accounting.ledger');
+                Route::get('/cash-book', [Accounting\AccountingReportController::class, 'cashBook'])->name('accounting.cash-book');
+                Route::get('/trial-balance', [Accounting\AccountingReportController::class, 'trialBalance'])->name('accounting.trial-balance');
+                Route::get('/income-statement', [Accounting\AccountingReportController::class, 'incomeStatement'])->name('accounting.income-statement');
+                Route::get('/balance-sheet', [Accounting\AccountingReportController::class, 'balanceSheet'])->name('accounting.balance-sheet');
+            });
+            Route::middleware('can:accounts.manage')->group(function () {
+                Route::get('/vouchers/create', [Accounting\VoucherController::class, 'create'])->name('vouchers.create');
+                Route::post('/vouchers', [Accounting\VoucherController::class, 'store'])->name('vouchers.store');
+                Route::post('/vouchers/{voucher}/void', [Accounting\VoucherController::class, 'void'])->name('vouchers.void');
+            });
+            Route::get('/vouchers/{voucher}', [Accounting\VoucherController::class, 'show'])->middleware('can:accounts.view')->whereNumber('voucher')->name('vouchers.show');
+        });
 
         // Declarative master-data screens (see app/Admin/Resources). Keep last: the slug list is the only constraint.
         Route::controller(Admin\ResourceController::class)->group(function () {

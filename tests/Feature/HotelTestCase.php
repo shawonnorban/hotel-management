@@ -29,6 +29,7 @@ abstract class HotelTestCase extends TestCase
 
         Settings::flush();
         $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
+        $this->seed(\Database\Seeders\ChartOfAccountsSeeder::class);
 
         \App\Models\TblFloor::create(['floorid' => 1, 'floorname' => 'Ground', 'status' => 1]);
         Setting::create(['id' => 2, 'title' => 'Test Hotel', 'servicecharge' => 10, 'splash_logo' => '', 'timezone' => 'UTC', 'checkintime' => '14:00', 'checkouttime' => '12:00', 'dateformat' => 'Y-m-d']);
