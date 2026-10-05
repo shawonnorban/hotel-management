@@ -15,6 +15,11 @@ class Permissions
         'reservations.edit' => 'Edit reservations',
         'reservations.status' => 'Confirm, check in, check out and cancel',
         'reservations.payments' => 'Take payments',
+        'purchases.view' => 'View purchases and supplier balances',
+        'purchases.create' => 'Record purchases and returns',
+        'purchases.pay' => 'Pay suppliers',
+        'stock.view' => 'View stock levels and movements',
+        'stock.adjust' => 'Issue stock, write off and count stock',
         'reports.view' => 'View reports',
         'accounts.view' => 'View accounts',
         'accounts.manage' => 'Post vouchers and manage the chart of accounts',
@@ -39,11 +44,11 @@ class Permissions
     {
         return [
             'Super Admin' => [],
-            'Manager' => ['dashboard.', 'reservations.', 'reports.', 'room-types.', 'rooms.', 'floors.', 'bed-types.', 'size-units.', 'facility-types.', 'facilities.', 'room-facilities.', 'room-images.', 'offers.', 'services.', 'taxes.', 'currencies.', 'promo-codes.', 'wake-up-calls.', 'customers.', 'star-classes.', 'booking-types.', 'accounts.view'],
+            'Manager' => ['dashboard.', 'reservations.', 'reports.', 'purchases.', 'stock.', 'inv-', 'room-types.', 'rooms.', 'floors.', 'bed-types.', 'size-units.', 'facility-types.', 'facilities.', 'room-facilities.', 'room-images.', 'offers.', 'services.', 'taxes.', 'currencies.', 'promo-codes.', 'wake-up-calls.', 'customers.', 'star-classes.', 'booking-types.', 'accounts.view'],
             'Front Desk' => ['dashboard.view', 'reservations.view', 'reservations.create', 'reservations.edit', 'reservations.status', 'reservations.payments', 'customers.view', 'customers.create', 'customers.edit', 'wake-up-calls.', 'rooms.view', 'room-types.view', 'offers.view', 'promo-codes.view'],
-            'Accountant' => ['dashboard.view', 'reservations.view', 'reservations.payments', 'reports.view', 'accounts.', 'taxes.', 'currencies.', 'payment-methods.view'],
+            'Accountant' => ['dashboard.view', 'reservations.view', 'reservations.payments', 'reports.view', 'accounts.', 'taxes.', 'currencies.', 'payment-methods.view', 'purchases.view', 'purchases.pay', 'inv-suppliers.view'],
             'HR Manager' => ['dashboard.view', 'hr-'],
-            'Store Keeper' => ['dashboard.view', 'inv-', 'reports.view'],
+            'Store Keeper' => ['dashboard.view', 'inv-', 'purchases.view', 'purchases.create', 'stock.', 'reports.view'],
         ];
     }
 

@@ -120,6 +120,28 @@ Route::prefix('admin')->name('admin.')->group(function () {
             });
         });
 
+        Route::prefix('purchasing')->group(function () {
+            Route::middleware('can:purchases.create')->group(function () {
+                Route::get('/purchases/create', [Admin\PurchaseController::class, 'create'])->name('purchases.create');
+                Route::post('/purchases', [Admin\PurchaseController::class, 'store'])->name('purchases.store');
+                Route::post('/purchases/{purchase}/return', [Admin\PurchaseController::class, 'returnGoods'])->name('purchases.return');
+            });
+            Route::post('/purchases/{purchase}/pay', [Admin\PurchaseController::class, 'pay'])->middleware('can:purchases.pay')->name('purchases.pay');
+            Route::middleware('can:purchases.view')->group(function () {
+                Route::get('/purchases', [Admin\PurchaseController::class, 'index'])->name('purchases.index');
+                Route::get('/purchases/{purchase}', [Admin\PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
+            });
+            Route::middleware('can:stock.view')->group(function () {
+                Route::get('/stock', [Admin\StockController::class, 'index'])->name('stock.index');
+                Route::get('/stock/movements', [Admin\StockController::class, 'movements'])->name('stock.movements');
+            });
+            Route::middleware('can:stock.adjust')->group(function () {
+                Route::post('/stock/issue', [Admin\StockController::class, 'issue'])->name('stock.issue');
+                Route::post('/stock/waste', [Admin\StockController::class, 'waste'])->name('stock.waste');
+                Route::post('/stock/adjust', [Admin\StockController::class, 'adjust'])->name('stock.adjust');
+            });
+        });
+
         Route::prefix('accounting')->group(function () {
             Route::middleware('can:accounts.view')->group(function () {
                 Route::get('/vouchers', [Accounting\VoucherController::class, 'index'])->name('vouchers.index');

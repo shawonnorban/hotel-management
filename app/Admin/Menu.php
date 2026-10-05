@@ -17,6 +17,8 @@ class Menu
         ['Administration', 'Roles & permissions', 'bi-shield-lock', 'admin.roles.index', 'roles.manage'],
         ['Administration', 'Hotel settings', 'bi-gear', 'admin.settings.edit', 'settings.manage'],
         ['Administration', 'Payment gateways', 'bi-credit-card', 'admin.gateways.index', 'settings.manage'],
+        ['Purchasing', 'Purchases', 'bi-cart-check', 'admin.purchases.index', 'purchases.view'],
+        ['Purchasing', 'Stock levels', 'bi-boxes', 'admin.stock.index', 'stock.view'],
         ['Accounting', 'Vouchers', 'bi-journal-text', 'admin.vouchers.index', 'accounts.view'],
         ['Accounting', 'Account ledger', 'bi-book', 'admin.accounting.ledger', 'accounts.view'],
         ['Accounting', 'Cash & bank book', 'bi-wallet2', 'admin.accounting.cash-book', 'accounts.view'],
