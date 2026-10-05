@@ -317,7 +317,9 @@ if ($db['default']['database'] == "{DATABASE}" || $db['default']['database'] == 
     exit;
 } else {
 
-    $mysqli = new mysqli($db['default']['hostname'], $db['default']['username'], $db['default']['password'], $db['default']['database']);
+    // PHP 8.1+ throws mysqli_sql_exception on failure instead of returning an error code
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $mysqli = @new mysqli($db['default']['hostname'], $db['default']['username'], $db['default']['password'], $db['default']['database']);
 
     // Check connection
     if ($mysqli->connect_errno) {

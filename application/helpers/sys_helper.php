@@ -14,7 +14,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
         //if not empty posted data
         if (!empty($data)) { 
             $data = trim($data);
-            $data = filter_var($data, FILTER_SANITIZE_STRING);
+            $data = strip_tags($data);
             $data = stripslashes($data);
             $data = htmlspecialchars($data);
             return $data;
