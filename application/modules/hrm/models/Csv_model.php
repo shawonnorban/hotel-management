@@ -88,7 +88,7 @@ $this->db->where('e.date >=', $format_start_date);
 $this->db->where('e.date <=', $format_end_date);
 $this->db->group_by('e.att_id');
 $query = $this->db->get();
-$result = $query->result();
+$result = $query ? $query->result() : array();
 return $result;
 
     }

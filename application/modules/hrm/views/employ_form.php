@@ -172,6 +172,7 @@
                                                 </option>
                                                 <?php
 
+                                                    $division_type = 0;
                                                     foreach ($dropdowndept as $division) {
                                                         if ($division_type == 0) {
                                                         if ($division_type == 0) {

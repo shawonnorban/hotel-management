@@ -853,7 +853,7 @@ public function cv()
 				->delete('custom_table');
 				$this->db->where('employee_id',$this->input->post('employee_id',TRUE))
 				->delete('employee_benifit');
-				for ($i=0; $i < sizeof($customr_field); $i++) {
+				for ($i=0; $i < sizeof((array) $customr_field); $i++) {
 					$custom = [
 						'custom_field'            =>  $customr_field[$i],
 						'custom_data_type' 	      => $customr_field_type[$i],

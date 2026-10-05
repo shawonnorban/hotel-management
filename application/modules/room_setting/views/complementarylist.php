@@ -25,7 +25,7 @@
                                                  id="roomtype">
                                                  <option value="" selected="selected">
                                                      <?php echo display('please_select_one') ?></option>
-                                                 <?php foreach ($roomtype as $ltype) {?>
+                                                 <?php foreach (($roomtype ?: array()) as $ltype) {?>
                                                  <option value="<?php echo html_escape($ltype->roomtype) ?>">
                                                      <?php echo html_escape($ltype->roomtype);?>
                                                  </option>
@@ -124,7 +124,7 @@
                          <?php if (!empty($complist)) {
 							 ?>
                          <?php $sl = 1; ?>
-                         <?php foreach ($complist as $dtype) { ?>
+                         <?php foreach (($complist ?: array()) as $dtype) { ?>
                          <tr class="<?php echo ($sl & 1)?"odd gradeX":"even gradeC" ?>">
                              <td><?php echo $sl; ?></td>
                              <td><?php echo html_escape($dtype->roomtype); ?></td>

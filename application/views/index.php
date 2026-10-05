@@ -46,7 +46,7 @@ $html_language_select .= '</select>';
         href="https://fonts.googleapis.com/css?family=Caveat:400,700|Playfair+Display:400,400i,700,700i,900,900i|Sarabun:100,100i,200,200i,300,300i,400,400i,500,500i,600,600i,700,700i,800&display=swap"
         rel="stylesheet" />
     <link href="<?php echo base_url(); ?>website_assets/css/style.css?v=3" rel="stylesheet">
-    <title><?php echo html_escape($title); ?></title>
+    <title><?php echo html_escape(isset($title) ? $title : ''); ?></title>
 </head>
 
 <body>
@@ -307,7 +307,7 @@ $html_language_select .= '</select>';
     <script src="<?php echo base_url('assets/sweetalert/sweetalert.min.js') ?>" type="text/javascript"></script>
     <script src="<?php echo base_url(); ?>website_assets/js/script.js"></script>
     <script src="<?php echo base_url(); ?>website_assets/js/subscriber_email.js"></script>
-    <?php if ($title == 'Contact Us') { ?>
+    <?php if (isset($title) && $title == 'Contact Us') { ?>
         <input type="hidden" id="latitude" value="<?php echo html_escape($settinginfo->latitude); ?>">
         <input type="hidden" id="longitude" value="<?php echo html_escape($settinginfo->longitude); ?>">
         <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo html_escape($settinginfo->map_key); ?>">

@@ -196,7 +196,7 @@ class Language extends MX_Controller {
 
         $lang = $this->input->post('phrase',TRUE); 
 
-        if (sizeof($lang) > 0) {
+        if (sizeof((array) $lang) > 0) {
 
             if ($this->db->table_exists($this->table)) {
 

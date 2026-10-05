@@ -437,7 +437,7 @@ class Hotel extends CI_Controller
 	{
 		$finyear = $this->input->post('finyear', true);
 		if ($finyear <= 0) {
-			redirect($_SERVER['HTTP_REFERER']);
+			redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url());
 		}
 		$payment_method = $this->input->post('pmethod', true);
 		$check_gateway = $this->db->select('*')->from('payment_method')->where('payment_method_id', $payment_method)->get()->row();
@@ -740,8 +740,11 @@ class Hotel extends CI_Controller
 		$Difference = implode(',', $Diff);
 		return $Difference;
 	}
-	public function paymentgateway($orderid, $paymentid)
+	public function paymentgateway($orderid = null, $paymentid = null)
 	{
+		if ($orderid === null || $paymentid === null) {
+			show_404();
+		}
 		$data['title'] = "Payment information";
 		$data['orderinfo']  	       = $this->hotel_model->read('*', 'booked_info', array('booking_number' => $orderid));
 		$bookedInfo = $this->db->select('*')->from('booked_info')->where('booking_number', $orderid)->get()->row();
@@ -858,8 +861,11 @@ class Hotel extends CI_Controller
 		$paypalURL = $this->paypal_lib->paypal_url;
 		$result    = $this->paypal_lib->curlPost($paypalURL, $paypalInfo);
 	}
-	public function successful($orderid, $paymentid)
+	public function successful($orderid = null, $paymentid = null)
 	{
+		if ($orderid === null || $paymentid === null) {
+			show_404();
+		}
 		$orderinfo  	       = $this->hotel_model->read('*', 'booked_info', array('booking_number' => $orderid));
 		$customerid 	   = $orderinfo->cutomerid;
 		$pmethod = $paymentid;
@@ -902,13 +908,19 @@ class Hotel extends CI_Controller
 			}
 		}
 	}
-	public function fail($orderid)
+	public function fail($orderid = null)
 	{
+		if ($orderid === null) {
+			show_404();
+		}
 		$this->session->set_userdata('exception', display('order_fail'));
 		redirect('hotel/orderdelevered/');
 	}
-	public function cancilorder($orderid)
+	public function cancilorder($orderid = null)
 	{
+		if ($orderid === null) {
+			show_404();
+		}
 		$this->session->set_userdata('message', display('order_fail'));
 		redirect('hotel/orderdelevered/');
 	}
@@ -1031,8 +1043,8 @@ class Hotel extends CI_Controller
 
 			$sessiondata = array(
 				'UserID' => $customerid,
-				'UserName' => $guestfullname,
-				'UserEmail' => $email
+				'UserName' => $c_name,
+				'UserEmail' => $emial
 			);
 			$this->session->set_userdata($sessiondata);
 			header("Location: " . $this->config->base_url());
@@ -1203,6 +1215,9 @@ class Hotel extends CI_Controller
 		$data['title'] = display('booking_report');
 		$id = $this->session->userdata('UserID');
 		$customerinfo = $this->db->select("*")->from('customerinfo')->where('customerid', $id)->get()->row();
+		if (empty($customerinfo)) {
+			redirect('user/login');
+		}
 		$customerhead = $customerinfo->customernumber . '-' . $customerinfo->firstname . ' ' . $customerinfo->lastname;
 		$coahead = $this->db->select("HeadCode")->from('acc_coa')->where('HeadName', $customerhead)->get()->row();
 		$data['intinfo']   = $this->hotel_model->findById($id);
@@ -1259,7 +1274,7 @@ class Hotel extends CI_Controller
 		$userinfo = $this->db->select("*")->from('booked_info')->where('bookedid', $bid)->where("cutomerid", $id)->get()->row();
 		if (empty($userinfo)) {
 			$this->session->set_flashdata('exception',  "You do not have permission to access");
-			redirect($_SERVER['HTTP_REFERER']);
+			redirect(isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : base_url());
 		}
 		$details = $this->hotel_model->details($userinfo->bookedid);
 		$data['bookinfo']   = $details;

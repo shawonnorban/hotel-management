@@ -173,7 +173,7 @@ class Lic
         }
 
         //check licence
-        if (isset($_SESSION['LicSysLog']) && @sizeof($_SESSION['LicSysLog']) > 0 && isset($_SESSION['LicSysLog']->expire_date) && isset($_SESSION['LicSysLog']->product_key) && isset($_SESSION['LicSysLog']->licence)) {
+        if (isset($_SESSION['LicSysLog']) && is_object($_SESSION['LicSysLog']) && isset($_SESSION['LicSysLog']->expire_date) && isset($_SESSION['LicSysLog']->product_key) && isset($_SESSION['LicSysLog']->licence)) {
             //call envato LicSysLog object
             $this->envato($_SESSION['LicSysLog']);
         } else {

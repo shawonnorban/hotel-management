@@ -49,7 +49,7 @@
     </tr>
     <?php
     $x=1;
-    foreach($query as $qr){?>
+    foreach(($query ?: array()) as $qr){?>
     <tr>
         <td><?php echo $x++;?></td>
         <td><?php echo html_escape($qr->date)?></td>

@@ -92,7 +92,7 @@ class Candidate extends MX_Controller {
 			$this->db->insert('candidate_basic_info', $postData1);
 		
 
-			for ($i=0; $i < sizeof($unis); $i++) {
+			for ($i=0; $i < sizeof((array) $unis); $i++) {
 				$postData2= array(
 					'can_id' 	              =>$id,
 					'university_name'         => $unis[$i],
@@ -106,7 +106,7 @@ class Candidate extends MX_Controller {
 			}
 		    }
 			
-			for ($i=0; $i < sizeof($comname); $i++) {
+			for ($i=0; $i < sizeof((array) $comname); $i++) {
 			$postData = array(
 			'can_id' 	                   => $id,
 			'company_name'                 => $comname[$i],
@@ -288,7 +288,7 @@ public function cv()
 		
 $this->db->where('can_id',$this->input->post('can_id', TRUE))
  			->delete('candidate_education_info');
-			for ($i=0; $i < sizeof($unis); $i++) {
+			for ($i=0; $i < sizeof((array) $unis); $i++) {
 				$postData2= array(
 					'can_id' 	              => $this->input->post('can_id', TRUE),
 					'university_name'         => $unis[$i],
@@ -303,7 +303,7 @@ $this->db->where('can_id',$this->input->post('can_id', TRUE))
 			$this->db->where('can_id',$this->input->post('can_id', TRUE))
  			->delete('candidate_workexperience');
 
-			for ($i=0; $i < sizeof($comname); $i++) {
+			for ($i=0; $i < sizeof((array) $comname); $i++) {
 			$postData = array(
 			'can_id' 	                   => $this->input->post('can_id',TRUE),
 			'company_name'                 => $comname[$i],
@@ -470,7 +470,7 @@ public function candidate_edu_info_view()
 
 			$id = $this->input->post('can_id', TRUE);
 
-		    for ($i=0; $i < sizeof($unis); $i++) {
+		    for ($i=0; $i < sizeof((array) $unis); $i++) {
 				$postData = array(
 					'can_id' 	              => $this->input->post('can_id', TRUE),
 					'university_name'         => $unis[$i],
@@ -527,7 +527,7 @@ public function update_can_eduifo_form($id = null){
  			->delete('candidate_education_info');
 			  
 
-		    for ($i=0; $i < sizeof($unis); $i++) {
+		    for ($i=0; $i < sizeof((array) $unis); $i++) {
 				$postData = array(
 					'can_id' 	              => $this->input->post('can_id', TRUE),
 					'university_name'         => $unis[$i],
@@ -591,7 +591,7 @@ public function workexperience_view()
 	  
 		
 		if ($this->form_validation->run() === true) {
- for ($i=0; $i < sizeof($comname); $i++) {
+ for ($i=0; $i < sizeof((array) $comname); $i++) {
 			$postData = array(
 			'can_id' 	                   => $this->input->post('can_id',TRUE),
 			'company_name'                 => $comname[$i],
@@ -636,7 +636,7 @@ public function workexperience_view()
  			->delete('candidate_workexperience');
 			  
 
-		 for ($i=0; $i < sizeof($comname); $i++) {
+		 for ($i=0; $i < sizeof((array) $comname); $i++) {
 			$postData = array(
 			'can_id' 	                   => $this->input->post('can_id',TRUE),
 			'company_name'                 => $comname[$i],

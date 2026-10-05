@@ -126,6 +126,10 @@ public function edit_role($id=null)
 		->where('role_id',$id)
 		->get()->row();
 
+		if (empty($data['roleData'])) {
+			show_404();
+		}
+
 		$data['roleAcc'] = $this->db->select('sec_role_permission.*,sec_menu_item.menu_title')
 		->from('sec_role_permission')
 		->join('sec_menu_item','sec_menu_item.menu_id=sec_role_permission.menu_id')
@@ -201,13 +205,17 @@ public function edit_role($id=null)
 
 			$data['roleData'] = $this->db->select('*')
 			->from('sec_role_tbl')
-			->where('role_id',$id)
+			->where('role_id',$role_id)
 			->get()->row();
+
+		if (empty($data['roleData'])) {
+			show_404();
+		}
 
 			$data['roleAcc'] = $this->db->select('sec_role_permission.*,sec_menu_item.menu_title')
 			->from('sec_role_permission')
 			->join('sec_menu_item','sec_menu_item.menu_id=sec_role_permission.menu_id')
-			->where('role_id',$id)
+			->where('role_id',$role_id)
 			->get()->result();
 
 			$data['page']   	= "role/edit_role";   
