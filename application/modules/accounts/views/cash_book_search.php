@@ -1,4 +1,5 @@
 <?php
+#[AllowDynamicProperties]
 class CResult
 {
     public $row;
@@ -17,6 +18,7 @@ class CResult
 };
 ?>
 <?php
+#[AllowDynamicProperties]
 class CConManager
 {
     private $DataBase='new_hmvc';
@@ -107,6 +109,7 @@ class CConManager
 
 
 <?php
+#[AllowDynamicProperties]
 class CAccount
 {
     private $oConnManager;

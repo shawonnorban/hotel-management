@@ -46,6 +46,7 @@
 
 // ------------------------------------------------------------------------
 
+#[AllowDynamicProperties]
 class Paypal_lib
 {
     // Define properties explicitly

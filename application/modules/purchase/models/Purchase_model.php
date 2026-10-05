@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Purchase_model extends CI_Model {
 	
 	private $table = 'purchaseitem';

@@ -1,4 +1,5 @@
 <?php
+#[AllowDynamicProperties]
 class CCommon
 {
     public function __construct()

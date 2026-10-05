@@ -48,3 +48,11 @@ Thumbs.db
 *.mov
 *.wmv
 
+
+# Runtime files and sensitive data
+error_log
+application/cache/temp/ci_session*
+application/logs/log-*.php
+assets/data/backup/*.sql
+assets/data/backup/*.zip
+.env

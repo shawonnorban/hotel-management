@@ -7,6 +7,7 @@
  * @version     : Version 1.0
  */
 defined('BASEPATH') or exit('No direct script access allowed');
+#[AllowDynamicProperties]
 class Theme extends MX_Controller {
 
   private $theme_tbl = 'themes';

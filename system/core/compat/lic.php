@@ -39,6 +39,7 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Lic
 {
     private $domain;

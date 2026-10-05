@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
  
+#[AllowDynamicProperties]
 class Generate
 {  
 	private $ip = array('127.0.0.1', '::1', 'localhost');

@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Backup_restore extends MX_Controller {
 
     private $savePath = "assets/data/backup/";

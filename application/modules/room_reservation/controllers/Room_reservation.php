@@ -4,6 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+#[AllowDynamicProperties]
 class Room_reservation extends MX_Controller
 {
 

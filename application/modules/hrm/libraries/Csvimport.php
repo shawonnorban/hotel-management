@@ -17,6 +17,7 @@
  * @author          Brad Stinson
  */
 
+#[AllowDynamicProperties]
 class csvimport {
 
 	private $filepath = "";

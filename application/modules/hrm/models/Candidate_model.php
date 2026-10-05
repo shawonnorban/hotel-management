@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Candidate_model extends CI_Model {
  
 	public function create_caninfo($data = array())

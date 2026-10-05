@@ -16,6 +16,7 @@ define('UPDATE_INFO_URL','http://update.bdtask.com/xainhotel/autoupdate/update_i
 // CRM temporary path
 define('TEMP_FOLDER', FCPATH .'temp' . '/');
 
+#[AllowDynamicProperties]
 class Autoupdate extends MX_Controller {
 	
 	private $tmp_update_dir;

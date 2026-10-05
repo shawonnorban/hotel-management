@@ -11,6 +11,7 @@
  * @version		1.0
  */
  
+#[AllowDynamicProperties]
 class Ciqrcode
 {
 	var $cacheable = true;

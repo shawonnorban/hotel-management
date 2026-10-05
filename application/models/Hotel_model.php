@@ -6,6 +6,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  *
  * @author linktech
  */
+#[AllowDynamicProperties]
 class Hotel_model extends CI_Model{
 	public function allmenu_dropdown(){
 

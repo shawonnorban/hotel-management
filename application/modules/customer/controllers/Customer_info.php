@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Customer_info extends MX_Controller
 {
 

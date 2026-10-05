@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Bedtype_model extends CI_Model {
 	
 	private $table = 'bedstype';

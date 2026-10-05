@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Setting extends MX_Controller
 {
 

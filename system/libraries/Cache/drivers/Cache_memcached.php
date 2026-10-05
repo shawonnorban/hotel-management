@@ -46,6 +46,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link
  */
+#[AllowDynamicProperties]
 class CI_Cache_memcached extends CI_Driver {
 
 	/**

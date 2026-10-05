@@ -1,21 +1,20 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-define('DOMPDF_ENABLE_AUTOLOAD', false);
-//require_once("./vendor/dompdf/dompdf/dompdf_config.inc.php");
 require_once FCPATH . 'vendor/autoload.php';  // Autoload Composer dependencies
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+#[AllowDynamicProperties]
 class Pdfgenerator
 {
 
   public function generate($html, $filename = '', $stream = TRUE, $paper = 'A4', $orientation = "portrait")
   {
-    $dompdf = new DOMPDF();
-    $dompdf->load_html($html);
-    $dompdf->set_paper($paper, $orientation);
+    $dompdf = new Dompdf();
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper($paper, $orientation);
     $dompdf->render();
     if ($stream) {
       $dompdf->stream($filename . ".pdf", array("Attachment" => 0));
@@ -28,9 +27,9 @@ class Pdfgenerator
 
     $filename = (!empty($filename) ? $filename : date("Y-m-d") . "-" . $booking_id . '.pdf');
 
-    $dompdf = new DOMPDF();
-    $dompdf->load_html($html);
-    $dompdf->set_paper($paper, $orientation);
+    $dompdf = new Dompdf();
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper($paper, $orientation);
     $dompdf->render();
     if ($stream) {
       $dompdf->stream($filename, array("Attachment" => 0));

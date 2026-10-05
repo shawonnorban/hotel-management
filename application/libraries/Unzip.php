@@ -22,6 +22,7 @@
 */ 
 
 
+#[AllowDynamicProperties]
 class Unzip
 { 
 	protected $_status;

@@ -334,7 +334,8 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/user_guide/libraries/encryption.html
 |
 */
-$config['encryption_key'] = 'TubaHotelMGT@1!KEY2019';
+// Set a random key in the ENCRYPTION_KEY environment variable (e.g. Apache SetEnv); never commit it.
+$config['encryption_key'] = (string) getenv('ENCRYPTION_KEY');
 
 /*
 |--------------------------------------------------------------------------

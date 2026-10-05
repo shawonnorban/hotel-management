@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Flooradd_model extends CI_Model {
 	
 	private $table = 'tbl_floor';

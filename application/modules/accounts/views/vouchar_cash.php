@@ -1,5 +1,6 @@
 <?php
 
+#[AllowDynamicProperties]
 class CCommon
 {
     public function NumberToWord($number)

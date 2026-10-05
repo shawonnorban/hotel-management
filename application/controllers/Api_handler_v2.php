@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Api_handler_v2 extends CI_Controller {
     private $product_key = '31264738';
     private $api_url = "https://store.bdtask.com/class.addon.php";

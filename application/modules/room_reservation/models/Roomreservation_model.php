@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Roomreservation_model extends CI_Model {
 	
 	private $table = 'booked_info';

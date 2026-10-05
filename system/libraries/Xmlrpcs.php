@@ -58,6 +58,7 @@ if ( ! class_exists('CI_Xmlrpc', FALSE))
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/user_guide/libraries/xmlrpc.html
  */
+#[AllowDynamicProperties]
 class CI_Xmlrpcs extends CI_Xmlrpc {
 
 	/**

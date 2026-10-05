@@ -1,5 +1,6 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class SyncData
 {  
 	private $incomingDir  = './assets/data/incoming/';

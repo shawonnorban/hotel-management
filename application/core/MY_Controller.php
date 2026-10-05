@@ -1,5 +1,6 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class MY_Controller extends CI_Controller {
 
         protected $statusCode = 200;

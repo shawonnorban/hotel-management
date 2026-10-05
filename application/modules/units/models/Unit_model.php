@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Unit_model extends CI_Model {
 	
 	private $table = 'unit_of_measurement';

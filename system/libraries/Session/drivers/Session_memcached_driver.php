@@ -46,6 +46,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author	Andrey Andreev
  * @link	https://codeigniter.com/user_guide/libraries/sessions.html
  */
+#[AllowDynamicProperties]
 class CI_Session_memcached_driver extends CI_Session_driver implements SessionHandlerInterface {
 
 	/**

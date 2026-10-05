@@ -297,48 +297,17 @@ Check Database Connection
  *********/
 include 'application/config/database.php';
 
-if ($db['default']['database'] == "{DATABASE}" || $db['default']['database'] == "") {
-    $https = false;
+// PHP 8.1+ throws mysqli_sql_exception on failure instead of returning an error code
+mysqli_report(MYSQLI_REPORT_OFF);
+$mysqli = ($db['default']['database'] == "")
+    ? null
+    : @new mysqli($db['default']['hostname'], $db['default']['username'], $db['default']['password'], $db['default']['database']);
 
-    if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-        $protocol = 'https://';
-    } else {
-        $protocol = 'http://';
-    }
-
-    $dirname = rtrim(dirname($_SERVER['PHP_SELF']), '/') . '/';
-
-    if (isset($_SERVER['HTTPS']) and $_SERVER['HTTPS'] != 'off') {
-        $https = true;
-    }
-
-    $installerurl = $protocol . $_SERVER['HTTP_HOST'] . $dirname;
-    header('Location: ' . $installerurl . 'install');
-    exit;
-} else {
-
-    // PHP 8.1+ throws mysqli_sql_exception on failure instead of returning an error code
-    mysqli_report(MYSQLI_REPORT_OFF);
-    $mysqli = @new mysqli($db['default']['hostname'], $db['default']['username'], $db['default']['password'], $db['default']['database']);
-
-    // Check connection
-    if ($mysqli->connect_errno) {
-        $https = false;
-        if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-            $protocol = 'https://';
-        } else {
-            $protocol = 'http://';
-        }
-
-        $dirname = rtrim(dirname($_SERVER['PHP_SELF']), '/') . '/';
-        if (isset($_SERVER['HTTPS']) and $_SERVER['HTTPS'] != 'off') {
-            $https = true;
-        }
-
-        $installerurl = $protocol . $_SERVER['HTTP_HOST'] . $dirname;
-        header('Location: ' . $installerurl . 'install');
-        exit;
-    }
+if ($mysqli === null || $mysqli->connect_errno) {
+    header('HTTP/1.1 503 Service Unavailable', true, 503);
+    echo 'Database connection failed. Please check application/config/database.php.';
+    exit(1); // EXIT_ERROR
 }
+unset($mysqli);
 
 require_once BASEPATH . 'core/CodeIgniter.php';

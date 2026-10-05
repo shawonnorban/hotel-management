@@ -1,5 +1,6 @@
 <?php
 
+#[AllowDynamicProperties]
 class Api_hotel_model extends CI_Model
 {
 

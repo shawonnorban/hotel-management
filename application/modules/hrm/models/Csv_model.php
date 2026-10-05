@@ -2,6 +2,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+#[AllowDynamicProperties]
 class Csv_model extends CI_Model {
 
     

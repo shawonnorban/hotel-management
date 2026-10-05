@@ -46,6 +46,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @author		EllisLab Dev Team
  * @link		https://codeigniter.com/user_guide/libraries/file_uploading.html
  */
+#[AllowDynamicProperties]
 class CI_Upload {
 
 	/**
