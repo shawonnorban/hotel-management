@@ -16,6 +16,7 @@ use App\Models\HrPosition;
 use App\Models\LedgerAccount;
 use App\Models\User;
 use App\Services\Hr\PayrollService;
+use App\Services\Hr\WorkCalendar;
 use App\Services\LedgerService;
 use App\Support\AppSettings;
 use Illuminate\Support\Facades\Hash;
@@ -242,7 +243,7 @@ class HrTest extends HotelTestCase
     {
         $this->put('/admin/hr/attendance/weekly-off', ['off' => ['fri', 'sat']])->assertSessionHasNoErrors();
         AppSettings::flush();
-        $this->assertSame(['fri', 'sat'], app(\App\Services\Hr\WorkCalendar::class)->weeklyOff());
+        $this->assertSame(['fri', 'sat'], app(WorkCalendar::class)->weeklyOff());
         $this->put('/admin/hr/attendance/weekly-off', ['off' => ['funday']])->assertSessionHasErrors('off.0');
     }
 

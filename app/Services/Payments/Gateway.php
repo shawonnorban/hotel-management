@@ -10,9 +10,7 @@ use Illuminate\Http\Request;
 /** A hosted-checkout payment provider. */
 abstract class Gateway
 {
-    public function __construct(protected PaymentGateway $config)
-    {
-    }
+    public function __construct(protected PaymentGateway $config) {}
 
     /**
      * Create the payment on the provider's side.

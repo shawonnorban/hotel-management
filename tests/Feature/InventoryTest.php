@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\InventoryItem;
 use App\Models\ItemCategory;
+use App\Models\JournalEntry;
 use App\Models\LedgerAccount;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\PurchaseReturn;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\Unit;
@@ -37,7 +39,7 @@ class InventoryTest extends HotelTestCase
         $this->actingAs($this->staff, 'admin');
     }
 
-    private function buy(array $lines = null, array $extra = []): Purchase
+    private function buy(?array $lines = null, array $extra = []): Purchase
     {
         $lines ??= [['item' => $this->soap->id, 'quantity' => 100, 'unit_cost' => 2]];
         $this->post('/admin/purchasing/purchases', array_merge(['supplier_id' => $this->supplier->id, 'purchase_date' => today()->toDateString(), 'lines' => $lines], $extra))->assertSessionHasNoErrors();
@@ -146,7 +148,7 @@ class InventoryTest extends HotelTestCase
 
         $this->assertSame('2.000', $this->soap->fresh()->stock);
         $this->assertSame('0.000', $line->fresh()->returned);
-        $this->assertSame(0, \App\Models\PurchaseReturn::count());
+        $this->assertSame(0, PurchaseReturn::count());
     }
 
     public function test_issuing_stock_expenses_it_at_average_cost(): void
@@ -190,7 +192,7 @@ class InventoryTest extends HotelTestCase
         $this->post('/admin/purchasing/stock/adjust', ['item' => $this->rice->id, 'counted' => 5, 'reason' => 'Opening count'])->assertSessionHasNoErrors();
 
         $this->assertSame('5.000', $this->rice->fresh()->stock);
-        $this->assertSame(0, \App\Models\JournalEntry::count());
+        $this->assertSame(0, JournalEntry::count());
     }
 
     public function test_master_data_screens_generate_codes_and_protect_used_records(): void

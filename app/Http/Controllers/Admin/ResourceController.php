@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /** One controller serves every declarative {@see Resource}. */
@@ -147,7 +148,7 @@ class ResourceController extends Controller
         foreach ($this->formFields($res) as $field) {
             $rules[$field->name] = $field->validationRules($model, $table);
             if ($field->type === 'multiselect') {
-                $rules[$field->name.'.*'] = [\Illuminate\Validation\Rule::in(array_keys($field->resolveOptions()))];
+                $rules[$field->name.'.*'] = [Rule::in(array_keys($field->resolveOptions()))];
             }
             if ($field->type === 'password' && $model) {
                 $rules[$field->name] = array_values(array_filter($rules[$field->name], fn ($r) => $r !== 'required'));

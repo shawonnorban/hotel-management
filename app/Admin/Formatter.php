@@ -4,7 +4,9 @@ namespace App\Admin;
 
 use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 /** Renders a table cell for a field. */
 class Formatter
@@ -23,10 +25,10 @@ class Formatter
             'decimal' => number_format((float) $value, 2),
             'select' => e($field->resolveOptions()[$value] ?? $value),
             'image' => new HtmlString('<img src="'.e(asset($value)).'" alt="" class="rounded" style="height:36px;width:36px;object-fit:cover">'),
-            'date' => e(\Illuminate\Support\Carbon::parse($value)->format('d M Y')),
-            'datetime' => e(\Illuminate\Support\Carbon::parse($value)->format('d M Y H:i')),
+            'date' => e(Carbon::parse($value)->format('d M Y')),
+            'datetime' => e(Carbon::parse($value)->format('d M Y H:i')),
             'password' => '••••••',
-            default => e(\Illuminate\Support\Str::limit((string) $value, 60)),
+            default => e(Str::limit((string) $value, 60)),
         };
     }
 

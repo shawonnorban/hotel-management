@@ -5,8 +5,8 @@ namespace App\Admin\Resources;
 use App\Admin\Field;
 use App\Admin\Resource;
 use App\Models\Roomdetails;
-use App\Models\RoomfailityRefAccomodation;
 use App\Models\Roomfacilitydetails;
+use App\Models\RoomfailityRefAccomodation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 

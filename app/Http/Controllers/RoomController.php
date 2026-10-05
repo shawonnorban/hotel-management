@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Roomdetails;
+use App\Models\RoomfailityRefAccomodation;
 use App\Models\RoomImage;
 use App\Services\BookingService;
 use Carbon\Carbon;
@@ -65,7 +66,7 @@ class RoomController extends Controller
             $quote = $this->booking->quote($room, $checkin, $checkout, (int) ($search['rooms'] ?? 1));
         }
 
-        $facilities = \App\Models\RoomfailityRefAccomodation::query()
+        $facilities = RoomfailityRefAccomodation::query()
             ->where('room_id', $room->roomid)
             ->join('roomfacilitydetails', 'roomfacilitydetails.facilityid', '=', 'roomfaility_ref_accomodation.facilityid')
             ->orderBy('roomfacilitydetails.facilitytitle')

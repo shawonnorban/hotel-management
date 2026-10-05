@@ -4,9 +4,10 @@ namespace App\Admin\Resources;
 
 use App\Admin\Field;
 use App\Admin\Resource;
-use App\Models\RoomImage;
 use App\Models\Roomdetails;
+use App\Models\RoomImage;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 class RoomImageResource extends Resource
 {
@@ -34,7 +35,7 @@ class RoomImageResource extends Resource
     {
         // A new record needs a file; an existing one keeps its current image when none is uploaded.
         if (! $model && empty($data['room_imagename'])) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['room_imagename' => 'Please choose an image.']);
+            throw ValidationException::withMessages(['room_imagename' => 'Please choose an image.']);
         }
 
         return $data;

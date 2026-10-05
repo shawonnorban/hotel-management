@@ -15,9 +15,7 @@ class AttendanceController extends Controller
 {
     public const STATUSES = ['present' => 'Present', 'late' => 'Late', 'absent' => 'Absent', 'leave' => 'On leave', 'half_day' => 'Half day'];
 
-    public function __construct(private WorkCalendar $calendar)
-    {
-    }
+    public function __construct(private WorkCalendar $calendar) {}
 
     public function sheet(Request $request)
     {
@@ -69,7 +67,7 @@ class AttendanceController extends Controller
         $records = HrAttendance::whereBetween('work_date', [$start->toDateString(), $start->copy()->endOfMonth()->toDateString()])->get()->groupBy('employee_id');
         $employees = HrEmployee::where(fn ($q) => $q->where('is_active', true)->orWhereIn('id', $records->keys()))->orderBy('first_name')->get();
 
-        $rows = $employees->map(function ($e) use ($records, $days) {
+        $rows = $employees->map(function ($e) use ($records) {
             $byDay = ($records[$e->id] ?? collect())->keyBy(fn ($r) => $r->work_date->day);
             $count = fn ($s) => $byDay->where('status', $s)->count();
 

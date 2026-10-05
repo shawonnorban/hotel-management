@@ -10,7 +10,7 @@ use App\Services\Payments\Gateway;
 use App\Services\Payments\PayPalGateway;
 use App\Services\Payments\SslCommerzGateway;
 use App\Services\Payments\StripeGateway;
-use App\Support\Settings;
+use App\Support\Money;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -25,9 +25,7 @@ class OnlinePaymentService
 {
     private const CLASSES = ['stripe' => StripeGateway::class, 'paypal' => PayPalGateway::class, 'sslcommerz' => SslCommerzGateway::class];
 
-    public function __construct(private PaymentService $payments, private ReservationLog $log, private BookingNotifier $notifier)
-    {
-    }
+    public function __construct(private PaymentService $payments, private ReservationLog $log, private BookingNotifier $notifier) {}
 
     /** The gateway behind a payment method, when it is switched on and fully configured. */
     public function gatewayForMethod(PaymentMethod $method): ?PaymentGateway
@@ -161,7 +159,7 @@ class OnlinePaymentService
     /** Default ISO currency for new gateways: the hotel's currency code when it is a 3-letter code. */
     public static function defaultCurrency(): string
     {
-        $code = strtoupper((string) \App\Support\Money::currency()?->currencyname);
+        $code = strtoupper((string) Money::currency()?->currencyname);
 
         return preg_match('/^[A-Z]{3}$/', $code) ? $code : 'USD';
     }

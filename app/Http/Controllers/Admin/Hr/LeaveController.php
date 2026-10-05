@@ -13,9 +13,7 @@ use InvalidArgumentException;
 
 class LeaveController extends Controller
 {
-    public function __construct(private LeaveService $leave)
-    {
-    }
+    public function __construct(private LeaveService $leave) {}
 
     public function index(Request $request)
     {

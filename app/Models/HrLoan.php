@@ -29,5 +29,4 @@ class HrLoan extends Model
     {
         return round((float) $this->schedule->where('deducted', false)->sum('amount'), 2);
     }
-
 }

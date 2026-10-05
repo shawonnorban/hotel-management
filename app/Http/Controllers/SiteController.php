@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\RoomImage;
 use App\Models\Roomdetails;
+use App\Models\RoomImage;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
 

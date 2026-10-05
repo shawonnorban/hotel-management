@@ -23,9 +23,7 @@ use InvalidArgumentException;
  */
 class PayrollService
 {
-    public function __construct(private LedgerService $ledger)
-    {
-    }
+    public function __construct(private LedgerService $ledger) {}
 
     public function generate(string $period, ?int $userId): HrPayrollRun
     {

@@ -6,6 +6,7 @@ use App\Admin\Field;
 use App\Admin\Resource;
 use App\Models\HrAward;
 use App\Models\HrEmployee;
+use Illuminate\Database\Eloquent\Model;
 
 class HrAwardResource extends Resource
 {
@@ -39,7 +40,7 @@ class HrAwardResource extends Resource
         ];
     }
 
-    public function beforeSave(array $data, ?\Illuminate\Database\Eloquent\Model $model): array
+    public function beforeSave(array $data, ?Model $model): array
     {
         $data['cash_amount'] = $data['cash_amount'] ?? 0;
 

@@ -13,9 +13,7 @@ use RuntimeException;
 
 class StockController extends Controller
 {
-    public function __construct(private InventoryService $inventory)
-    {
-    }
+    public function __construct(private InventoryService $inventory) {}
 
     public function index(Request $request)
     {

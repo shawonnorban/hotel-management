@@ -5,6 +5,7 @@ namespace App\Admin\Resources;
 use App\Admin\Field;
 use App\Admin\Resource;
 use App\Models\TblFloor;
+use App\Models\TblRoomnofloorassign;
 use Illuminate\Database\Eloquent\Model;
 
 class FloorResource extends Resource
@@ -31,6 +32,6 @@ class FloorResource extends Resource
 
     public function deleteBlockedReason(Model $model): ?string
     {
-        return \App\Models\TblRoomnofloorassign::where('floorid', $model->floorid)->exists() ? 'Rooms are assigned to this floor.' : null;
+        return TblRoomnofloorassign::where('floorid', $model->floorid)->exists() ? 'Rooms are assigned to this floor.' : null;
     }
 }

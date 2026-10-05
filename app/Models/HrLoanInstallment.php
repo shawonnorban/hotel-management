@@ -16,5 +16,4 @@ class HrLoanInstallment extends Model
     {
         return ['amount' => 'decimal:2', 'deducted' => 'boolean'];
     }
-
 }

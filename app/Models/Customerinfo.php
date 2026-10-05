@@ -10,6 +10,7 @@ use Illuminate\Notifications\Notifiable;
 class Customerinfo extends Authenticatable
 {
     use Notifiable;
+
     protected $table = 'customerinfo';
 
     protected $primaryKey = 'customerid';

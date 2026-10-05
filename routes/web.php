@@ -1,10 +1,10 @@
 <?php
 
 use App\Admin\ResourceRegistry;
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\Accounting;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AccountController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\HomeController;
@@ -118,6 +118,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::post('/{booking}/payments', 'storePayment')->name('payments.store');
                 Route::post('/{booking}/refunds', 'storeRefund')->name('refunds.store');
             });
+        });
+
+        Route::middleware('can:backup.manage')->prefix('backups')->name('backups.')->controller(Admin\BackupController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{name}', 'download')->where('name', 'backup-[0-9]{8}-[0-9]{6}\.sql\.gz')->name('download');
+            Route::delete('/{name}', 'destroy')->where('name', 'backup-[0-9]{8}-[0-9]{6}\.sql\.gz')->name('destroy');
+        });
+
+        Route::prefix('reports')->name('reports.')->middleware('can:reports.view')->controller(Admin\ReportController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/bookings', 'bookings')->name('bookings');
+            Route::get('/receipts', 'receipts')->name('receipts');
+            Route::get('/occupancy', 'occupancy')->name('occupancy');
+            Route::get('/purchases', 'purchases')->name('purchases');
         });
 
         Route::prefix('hr')->name('hr.')->group(function () {

@@ -15,9 +15,7 @@ use InvalidArgumentException;
 /** Buying stock from suppliers: receipt, supplier payments and returns, all posted to the ledger. */
 class PurchaseService
 {
-    public function __construct(private InventoryService $inventory, private LedgerService $ledger)
-    {
-    }
+    public function __construct(private InventoryService $inventory, private LedgerService $ledger) {}
 
     /**
      * @param  list<array{item:int,quantity:float|int|string,unit_cost:float|int|string}>  $lines

@@ -14,5 +14,4 @@ class HrHoliday extends Model
     {
         return ['holiday_date' => 'date'];
     }
-
 }

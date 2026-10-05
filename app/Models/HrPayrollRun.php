@@ -15,14 +15,13 @@ class HrPayrollRun extends Model
         return ['paid_on' => 'date', 'total_expense' => 'decimal:2', 'total_net' => 'decimal:2', 'total_deductions' => 'decimal:2', 'total_loans' => 'decimal:2'];
     }
 
-    public function journalEntry(): \App\Models\JournalEntry
+    public function journalEntry(): JournalEntry
     {
-        return \App\Models\JournalEntry::findOrFail($this->journal_entry_id);
+        return JournalEntry::findOrFail($this->journal_entry_id);
     }
 
     public function items()
     {
         return $this->hasMany(HrPayrollItem::class, 'run_id')->with('employee');
     }
-
 }

@@ -7,6 +7,7 @@ use App\Models\BookedInfo;
 use App\Models\Customerinfo;
 use App\Models\FolioCharge;
 use App\Models\PaymentMethod;
+use App\Models\Promocode;
 use App\Models\Roomdetails;
 use App\Services\BookingService;
 use App\Services\InvoiceService;
@@ -27,8 +28,7 @@ class ReservationController extends Controller
         private BookingService $bookings,
         private PaymentService $payments,
         private InvoiceService $invoices,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -304,7 +304,7 @@ class ReservationController extends Controller
         }
         // A booking that already uses the code may keep it.
         if ($booking && strcasecmp((string) $booking->promocode, $data['promo']) === 0) {
-            return \App\Models\Promocode::whereRaw('UPPER(promocode) = ?', [strtoupper($data['promo'])])->first();
+            return Promocode::whereRaw('UPPER(promocode) = ?', [strtoupper($data['promo'])])->first();
         }
 
         return $this->bookings->findPromo($data['promo'], $room, $checkin)

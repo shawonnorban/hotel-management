@@ -9,9 +9,7 @@ use Illuminate\Mail\Mailables\Envelope;
 
 class NewBookingAlertMail extends Mailable
 {
-    public function __construct(public BookedInfo $booking, public string $heading)
-    {
-    }
+    public function __construct(public BookedInfo $booking, public string $heading) {}
 
     public function envelope(): Envelope
     {

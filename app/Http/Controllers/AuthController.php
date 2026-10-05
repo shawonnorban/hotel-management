@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
@@ -44,7 +45,7 @@ class AuthController extends Controller
             'lastname' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:255', Rule::unique('customerinfo', 'email')],
             'phone' => ['required', 'string', 'max:30', Rule::unique('customerinfo', 'cust_phone')],
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(8)->letters()->numbers()],
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
             'terms' => ['accepted'],
         ]);
 

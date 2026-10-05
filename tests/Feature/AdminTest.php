@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BookedInfo;
+use Illuminate\Support\Facades\Hash;
 
 class AdminTest extends HotelTestCase
 {
@@ -33,7 +34,7 @@ class AdminTest extends HotelTestCase
 
         $this->assertAuthenticatedAs($this->staff, 'admin');
         $this->assertNotNull($this->staff->fresh()->last_login);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('staffpass', $this->staff->fresh()->password), 'MD5 hash should be upgraded on login');
+        $this->assertTrue(Hash::check('staffpass', $this->staff->fresh()->password), 'MD5 hash should be upgraded on login');
     }
 
     public function test_disabled_or_non_staff_accounts_cannot_sign_in(): void

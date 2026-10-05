@@ -10,9 +10,7 @@ use Illuminate\Support\Carbon;
 
 class AccountingReportController extends Controller
 {
-    public function __construct(private LedgerService $ledger)
-    {
-    }
+    public function __construct(private LedgerService $ledger) {}
 
     public function ledger(Request $request)
     {

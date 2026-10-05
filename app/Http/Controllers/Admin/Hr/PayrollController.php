@@ -17,9 +17,7 @@ use RuntimeException;
 
 class PayrollController extends Controller
 {
-    public function __construct(private PayrollService $payroll)
-    {
-    }
+    public function __construct(private PayrollService $payroll) {}
 
     public function index()
     {

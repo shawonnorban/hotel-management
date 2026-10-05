@@ -14,9 +14,7 @@ use RuntimeException;
 
 class PurchaseController extends Controller
 {
-    public function __construct(private PurchaseService $purchases)
-    {
-    }
+    public function __construct(private PurchaseService $purchases) {}
 
     public function index(Request $request)
     {

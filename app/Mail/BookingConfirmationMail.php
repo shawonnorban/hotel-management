@@ -10,9 +10,7 @@ use Illuminate\Mail\Mailables\Envelope;
 
 class BookingConfirmationMail extends Mailable
 {
-    public function __construct(public BookedInfo $booking, public string $kind, public ?float $amount, private string $invoicePdf)
-    {
-    }
+    public function __construct(public BookedInfo $booking, public string $kind, public ?float $amount, private string $invoicePdf) {}
 
     public function envelope(): Envelope
     {

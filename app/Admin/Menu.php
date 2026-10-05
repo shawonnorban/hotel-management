@@ -14,9 +14,11 @@ class Menu
     private const SCREENS = [
         ['Overview', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
         ['Front desk', 'Reservations', 'bi-calendar-check', 'admin.reservations.index', 'reservations.view'],
+        ['Administration', 'Backups', 'bi-database', 'admin.backups.index', 'backup.manage'],
         ['Administration', 'Roles & permissions', 'bi-shield-lock', 'admin.roles.index', 'roles.manage'],
         ['Administration', 'Hotel settings', 'bi-gear', 'admin.settings.edit', 'settings.manage'],
         ['Administration', 'Payment gateways', 'bi-credit-card', 'admin.gateways.index', 'settings.manage'],
+        ['Reports', 'All reports', 'bi-file-earmark-bar-graph', 'admin.reports.index', 'reports.view'],
         ['Human resources', 'Attendance', 'bi-clock-history', 'admin.hr.attendance', 'hr-attendance.manage'],
         ['Human resources', 'Leave', 'bi-calendar2-minus', 'admin.hr.leave.index', 'hr-leave.manage'],
         ['Human resources', 'Staff loans', 'bi-cash-coin', 'admin.hr.loans.index', 'hr-loans.manage'],

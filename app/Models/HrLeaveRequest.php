@@ -24,5 +24,4 @@ class HrLeaveRequest extends Model
     {
         return $this->belongsTo(HrLeaveType::class, 'leave_type_id');
     }
-
 }

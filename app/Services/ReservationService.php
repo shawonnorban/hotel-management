@@ -24,8 +24,7 @@ class ReservationService
         private PaymentService $payments,
         private LedgerService $ledger,
         private ReservationLog $log,
-    ) {
-    }
+    ) {}
 
     public function create(
         Customerinfo $guest,

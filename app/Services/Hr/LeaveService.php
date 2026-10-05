@@ -12,9 +12,7 @@ use InvalidArgumentException;
 
 class LeaveService
 {
-    public function __construct(private WorkCalendar $calendar)
-    {
-    }
+    public function __construct(private WorkCalendar $calendar) {}
 
     /** Days of this type already approved in the calendar year. */
     public function used(HrEmployee $employee, HrLeaveType $type, int $year): float

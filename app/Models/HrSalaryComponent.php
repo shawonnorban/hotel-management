@@ -16,5 +16,4 @@ class HrSalaryComponent extends Model
     {
         return ['amount' => 'decimal:2', 'is_percent' => 'boolean'];
     }
-
 }

@@ -12,9 +12,7 @@ use InvalidArgumentException;
 /** Guest payments and refunds, each posted to the ledger. */
 class PaymentService
 {
-    public function __construct(private LedgerService $ledger, private ReservationLog $log)
-    {
-    }
+    public function __construct(private LedgerService $ledger, private ReservationLog $log) {}
 
     /** Record money received from the guest. */
     public function receive(BookedInfo $booking, float $amount, PaymentMethod $method, ?int $userId = null, ?string $details = null, ?string $reference = null): TblGuestpayments

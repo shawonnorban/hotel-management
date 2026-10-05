@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\LedgerAccount;
+use App\Models\PaymentMethod;
 use Illuminate\Database\Seeder;
 
 /** A ready-to-use chart of accounts for a hotel. Idempotent; never touches existing accounts. */
@@ -72,7 +73,7 @@ class ChartOfAccountsSeeder extends Seeder
     {
         $map = ['Cash Payment' => 'cash', 'Bank Payment' => 'bank', 'Card Payment' => 'bank', 'Paypal' => 'online', 'SSLCommerz' => 'online', 'Stripe' => 'online'];
 
-        foreach (\App\Models\PaymentMethod::whereNull('ledger_account_id')->get() as $method) {
+        foreach (PaymentMethod::whereNull('ledger_account_id')->get() as $method) {
             $key = $map[$method->payment_method] ?? 'cash';
             $account = LedgerAccount::where('system_key', $key)->first();
             if ($account) {

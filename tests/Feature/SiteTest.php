@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Mail\ContactMessageReceived;
+use App\Mail\TestMail;
 use App\Models\BookedInfo;
 use App\Models\ContactMessage;
+use App\Models\Currency;
 use App\Models\Customerinfo;
 use App\Models\Page;
 use App\Models\Setting;
@@ -12,7 +14,9 @@ use App\Models\Subscriber;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use App\Support\AppSettings;
+use App\Support\Money;
 use App\Support\Settings;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -221,7 +225,7 @@ class SiteTest extends HotelTestCase
     public function test_hotel_settings_and_mail_settings(): void
     {
         $this->actingAs($this->staff, 'admin');
-        $currency = \App\Models\Currency::create(['currencyname' => 'EUR', 'curr_icon' => '€', 'position' => 2, 'curr_rate' => 1]);
+        $currency = Currency::create(['currencyname' => 'EUR', 'curr_icon' => '€', 'position' => 2, 'curr_rate' => 1]);
 
         $this->get('/admin/settings')->assertOk()->assertSee('Hotel profile');
         $this->put('/admin/settings', ['title' => 'Seaside Inn', 'address' => '1 Beach Rd', 'phone' => '123', 'email' => 'hi@seaside.test', 'currency' => $currency->currencyid, 'servicecharge' => 7.5, 'checkintime' => '15:00', 'checkouttime' => '11:00'])->assertSessionHasNoErrors();
@@ -229,8 +233,8 @@ class SiteTest extends HotelTestCase
         Settings::flush();
         $this->assertSame('Seaside Inn', Settings::hotelName());
         $this->assertSame('7.50', (string) Settings::get('servicecharge'));
-        $this->assertSame('€', \App\Support\Money::currency()->curr_icon);
-        $this->assertSame('100,00€', str_replace('.', ',', \App\Support\Money::format(100)));
+        $this->assertSame('€', Money::currency()->curr_icon);
+        $this->assertSame('100,00€', str_replace('.', ',', Money::format(100)));
         $this->get('/')->assertSee('Seaside Inn');
 
         $this->put('/admin/settings/mail', ['host' => 'smtp.example.com', 'port' => 465, 'username' => 'u', 'password' => 'smtp-secret', 'encryption' => 'ssl', 'from_address' => 'no-reply@seaside.test', 'from_name' => 'Seaside'])->assertSessionHasNoErrors();
@@ -238,7 +242,7 @@ class SiteTest extends HotelTestCase
 
         AppSettings::flush();
         $this->assertSame('smtp-secret', AppSettings::get('mail.password'));
-        $this->assertStringNotContainsString('smtp-secret', (string) \Illuminate\Support\Facades\DB::table('app_settings')->where('key', 'mail.password')->value('value'));
+        $this->assertStringNotContainsString('smtp-secret', (string) DB::table('app_settings')->where('key', 'mail.password')->value('value'));
         $this->get('/admin/settings')->assertDontSee('smtp-secret');
 
         AppSettings::applyMailConfig();
@@ -254,6 +258,6 @@ class SiteTest extends HotelTestCase
         $this->put('/admin/settings', ['title' => ''])->assertSessionHasErrors('title');
         $this->put('/admin/settings', ['title' => 'X', 'servicecharge' => 150])->assertSessionHasErrors('servicecharge');
         $this->post('/admin/settings/mail-test', ['to' => 'me@example.com'])->assertSessionHas('status');
-        Mail::assertSent(\App\Mail\TestMail::class, fn ($m) => $m->hasTo('me@example.com'));
+        Mail::assertSent(TestMail::class, fn ($m) => $m->hasTo('me@example.com'));
     }
 }

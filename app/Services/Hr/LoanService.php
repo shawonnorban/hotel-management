@@ -12,9 +12,7 @@ use InvalidArgumentException;
 
 class LoanService
 {
-    public function __construct(private LedgerService $ledger)
-    {
-    }
+    public function __construct(private LedgerService $ledger) {}
 
     /** Lend money to an employee; it is taken back in equal monthly instalments through payroll. */
     public function issue(HrEmployee $employee, float $amount, int $installments, Carbon $issuedOn, string $firstMonth, int $payFromAccount, ?string $reason, ?int $userId): HrLoan

@@ -13,9 +13,7 @@ use InvalidArgumentException;
 
 class LoanController extends Controller
 {
-    public function __construct(private LoanService $loans)
-    {
-    }
+    public function __construct(private LoanService $loans) {}
 
     public function index()
     {

@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Mail;
 /** E-mails around a booking. Mail problems are logged and never break the booking itself. */
 class BookingNotifier
 {
-    public function __construct(private InvoiceService $invoices)
-    {
-    }
+    public function __construct(private InvoiceService $invoices) {}
 
     /** A booking was made on the website. */
     public function received(BookedInfo $booking): void

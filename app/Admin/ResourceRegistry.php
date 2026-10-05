@@ -5,10 +5,10 @@ namespace App\Admin;
 /** Central list of all generic resources. */
 class ResourceRegistry
 {
-    /** @var array<string,class-string<Resource>>|null */
+    /** @var array<string,class-string<resource>>|null */
     private static ?array $map = null;
 
-    /** @return array<string,class-string<Resource>> slug => resource class */
+    /** @return array<string,class-string<resource>> slug => resource class */
     public static function all(): array
     {
         if (self::$map === null) {

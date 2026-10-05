@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\BookedInfo;
-use App\Models\Customerinfo;
 use App\Models\FolioCharge;
+use App\Models\LedgerAccount;
 use App\Models\PaymentMethod;
 use App\Models\Promocode;
 use App\Models\TblGuestpayments;
+use App\Models\TblRoomOffer;
+use App\Models\User;
 use App\Services\LedgerService;
+use Database\Seeders\ChartOfAccountsSeeder;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 
 class ReservationTest extends HotelTestCase
 {
@@ -18,7 +23,7 @@ class ReservationTest extends HotelTestCase
     {
         parent::setUp();
         $this->ledger = app(LedgerService::class);
-        $this->seed(\Database\Seeders\ChartOfAccountsSeeder::class); // links payment methods to accounts
+        $this->seed(ChartOfAccountsSeeder::class); // links payment methods to accounts
         $this->actingAs($this->staff, 'admin');
     }
 
@@ -144,7 +149,7 @@ class ReservationTest extends HotelTestCase
     public function test_payment_method_decides_the_receiving_account(): void
     {
         $booking = $this->create();
-        $bank = PaymentMethod::create(['payment_method_id' => 6, 'payment_method' => 'Bank Payment', 'is_active' => 1, 'ledger_account_id' => \App\Models\LedgerAccount::where('system_key', 'bank')->value('id')]);
+        $bank = PaymentMethod::create(['payment_method_id' => 6, 'payment_method' => 'Bank Payment', 'is_active' => 1, 'ledger_account_id' => LedgerAccount::where('system_key', 'bank')->value('id')]);
 
         $this->post("/admin/reservations/{$booking->booking_number}/payments", ['amount' => 50, 'method' => $bank->payment_method_id, 'reference' => 'TRX-1'])->assertSessionHasNoErrors();
 
@@ -261,7 +266,7 @@ class ReservationTest extends HotelTestCase
 
     public function test_room_offers_discount_the_price_automatically(): void
     {
-        \App\Models\TblRoomOffer::create(['roomid' => $this->room->roomid, 'offer' => 20, 'offertitle' => 'Spring', 'offer_date' => today()->addMonth()]);
+        TblRoomOffer::create(['roomid' => $this->room->roomid, 'offer' => 20, 'offertitle' => 'Spring', 'offer_date' => today()->addMonth()]);
 
         $booking = $this->create();
 
@@ -297,7 +302,7 @@ class ReservationTest extends HotelTestCase
 
     public function test_front_desk_can_work_reservations_but_not_ledger(): void
     {
-        $desk = \App\Models\User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'desk2@example.com', 'password' => \Illuminate\Support\Facades\Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
+        $desk = User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'desk2@example.com', 'password' => Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
         $desk->assignRole('Front Desk');
         $booking = $this->create();
 
@@ -305,8 +310,8 @@ class ReservationTest extends HotelTestCase
         $this->post("/admin/reservations/{$booking->booking_number}/payments", ['amount' => 10, 'method' => $this->cash()->payment_method_id])->assertSessionHasNoErrors();
         $this->get('/admin/accounting/trial-balance')->assertForbidden();
 
-        $viewer = \App\Models\User::create(['firstname' => 'V', 'lastname' => 'W', 'email' => 'view@example.com', 'password' => \Illuminate\Support\Facades\Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
-        $viewer->givePermissionTo(\Spatie\Permission\Models\Permission::findOrCreate('reservations.view', 'admin'));
+        $viewer = User::create(['firstname' => 'V', 'lastname' => 'W', 'email' => 'view@example.com', 'password' => Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
+        $viewer->givePermissionTo(Permission::findOrCreate('reservations.view', 'admin'));
         $this->actingAs($viewer, 'admin');
         $this->get("/admin/reservations/{$booking->booking_number}")->assertOk();
         $this->post("/admin/reservations/{$booking->booking_number}/payments", ['amount' => 10, 'method' => $this->cash()->payment_method_id])->assertForbidden();

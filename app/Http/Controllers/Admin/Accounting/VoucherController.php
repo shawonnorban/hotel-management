@@ -13,9 +13,7 @@ use RuntimeException;
 
 class VoucherController extends Controller
 {
-    public function __construct(private LedgerService $ledger)
-    {
-    }
+    public function __construct(private LedgerService $ledger) {}
 
     public function index(Request $request)
     {

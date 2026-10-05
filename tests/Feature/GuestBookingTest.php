@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BookedInfo;
 use App\Models\Customerinfo;
+use Illuminate\Support\Facades\Hash;
 
 class GuestBookingTest extends HotelTestCase
 {
@@ -22,7 +23,7 @@ class GuestBookingTest extends HotelTestCase
         ])->assertRedirect('/');
 
         $guest = Customerinfo::where('email', 'new@example.com')->firstOrFail();
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('password1', $guest->pass));
+        $this->assertTrue(Hash::check('password1', $guest->pass));
         $this->assertNotSame(md5('password1'), $guest->pass);
         $this->assertAuthenticatedAs($guest, 'customer');
     }
@@ -46,7 +47,7 @@ class GuestBookingTest extends HotelTestCase
 
         $upgraded = $this->guest->fresh()->pass;
         $this->assertNotSame(md5('secret12'), $upgraded);
-        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('secret12', $upgraded));
+        $this->assertTrue(Hash::check('secret12', $upgraded));
     }
 
     public function test_deactivated_guest_cannot_sign_in(): void

@@ -14,5 +14,4 @@ class HrLeaveType extends Model
     {
         return ['is_active' => 'boolean', 'is_paid' => 'boolean'];
     }
-
 }

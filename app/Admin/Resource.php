@@ -57,9 +57,7 @@ abstract class Resource
         return $data;
     }
 
-    public function afterSave(Model $model, array $data, bool $created): void
-    {
-    }
+    public function afterSave(Model $model, array $data, bool $created): void {}
 
     /** Return a message to block deletion, or null to allow it. */
     public function deleteBlockedReason(Model $model): ?string

@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\FinancialYear;
 use App\Models\JournalEntry;
 use App\Models\LedgerAccount;
+use App\Models\User;
 use App\Services\LedgerService;
+use Illuminate\Support\Facades\Hash;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -19,7 +21,7 @@ class LedgerTest extends HotelTestCase
         $this->ledger = app(LedgerService::class);
     }
 
-    private function receive(float $amount, string $date = null): JournalEntry
+    private function receive(float $amount, ?string $date = null): JournalEntry
     {
         return $this->ledger->post('receipt', $date ?? today(), [
             ['account' => 'cash', 'debit' => $amount],
@@ -214,11 +216,11 @@ class LedgerTest extends HotelTestCase
 
     public function test_accountant_can_post_but_front_desk_cannot(): void
     {
-        $accountant = \App\Models\User::create(['firstname' => 'A', 'lastname' => 'C', 'email' => 'acc@example.com', 'password' => \Illuminate\Support\Facades\Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
+        $accountant = User::create(['firstname' => 'A', 'lastname' => 'C', 'email' => 'acc@example.com', 'password' => Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
         $accountant->assignRole('Accountant');
         $this->actingAs($accountant, 'admin')->get('/admin/accounting/vouchers/create')->assertOk();
 
-        $desk = \App\Models\User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'desk@example.com', 'password' => \Illuminate\Support\Facades\Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
+        $desk = User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'desk@example.com', 'password' => Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
         $desk->assignRole('Front Desk');
         $this->actingAs($desk, 'admin')->get('/admin/accounting/vouchers/create')->assertForbidden();
         $this->get('/admin/accounting/trial-balance')->assertForbidden();

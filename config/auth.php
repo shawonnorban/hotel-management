@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Customerinfo;
+use App\Models\User;
 
 return [
 
@@ -76,7 +77,7 @@ return [
 
         'admins' => [
             'driver' => 'upgrading',
-            'model' => App\Models\User::class,
+            'model' => User::class,
         ],
     ],
 

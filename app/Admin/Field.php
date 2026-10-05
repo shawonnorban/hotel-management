@@ -3,6 +3,8 @@
 namespace App\Admin;
 
 use Closure;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 /**
  * Declarative form/table field used by {@see Resource}.
@@ -40,9 +42,7 @@ class Field
 
     public array $attributes = [];
 
-    private function __construct(public string $name, public string $label)
-    {
-    }
+    private function __construct(public string $name, public string $label) {}
 
     public static function make(string $name, string $label, string $type = 'text'): static
     {
@@ -235,7 +235,7 @@ class Field
     }
 
     /** Validation rules with sensible per-type defaults. */
-    public function validationRules(?\Illuminate\Database\Eloquent\Model $model, string $table): array
+    public function validationRules(?Model $model, string $table): array
     {
         $rules = $this->ruleList();
         $required = $this->isRequired();
@@ -261,7 +261,7 @@ class Field
         $out = array_merge($required ? [] : ['nullable'], $rules, $base);
 
         if ($this->isUnique) {
-            $unique = \Illuminate\Validation\Rule::unique($table, $this->name);
+            $unique = Rule::unique($table, $this->name);
             if ($model) {
                 $unique->ignore($model->getKey(), $model->getKeyName());
             }
@@ -269,7 +269,7 @@ class Field
         }
 
         if ($this->type === 'select' && ! $this->options instanceof Closure) {
-            $out[] = \Illuminate\Validation\Rule::in(array_keys($this->options));
+            $out[] = Rule::in(array_keys($this->options));
         }
 
         return array_values(array_unique($out, SORT_REGULAR));

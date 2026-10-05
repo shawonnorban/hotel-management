@@ -21,5 +21,4 @@ class HrCandidate extends Model
     {
         return $this->belongsTo(HrPosition::class, 'position_id');
     }
-
 }

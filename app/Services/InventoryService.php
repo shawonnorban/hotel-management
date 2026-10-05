@@ -14,9 +14,7 @@ use InvalidArgumentException;
  */
 class InventoryService
 {
-    public function __construct(private LedgerService $ledger)
-    {
-    }
+    public function __construct(private LedgerService $ledger) {}
 
     /**
      * Apply a movement to an item inside the caller's transaction. Positive quantity brings stock in.

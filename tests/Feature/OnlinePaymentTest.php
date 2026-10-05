@@ -5,12 +5,18 @@ namespace Tests\Feature;
 use App\Mail\BookingConfirmationMail;
 use App\Mail\NewBookingAlertMail;
 use App\Models\BookedInfo;
+use App\Models\LedgerAccount;
 use App\Models\OnlinePayment;
 use App\Models\PaymentGateway;
 use App\Models\PaymentMethod;
+use App\Models\Setting;
 use App\Models\TblGuestpayments;
+use App\Models\User;
 use App\Services\LedgerService;
+use App\Support\Settings;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
@@ -21,11 +27,11 @@ class OnlinePaymentTest extends HotelTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\ChartOfAccountsSeeder::class);
+        $this->seed(ChartOfAccountsSeeder::class);
 
         PaymentMethod::firstOrCreate(['payment_method_id' => 5], ['payment_method' => 'SSLCommerz', 'is_active' => 1]);
         PaymentMethod::firstOrCreate(['payment_method_id' => 7], ['payment_method' => 'Stripe', 'is_active' => 1]);
-        PaymentMethod::whereKey([3, 5, 7])->update(['is_active' => 1, 'ledger_account_id' => \App\Models\LedgerAccount::where('system_key', 'online')->value('id')]);
+        PaymentMethod::whereKey([3, 5, 7])->update(['is_active' => 1, 'ledger_account_id' => LedgerAccount::where('system_key', 'online')->value('id')]);
 
         PaymentGateway::create(['driver' => 'stripe', 'payment_method_id' => 7, 'currency' => 'USD', 'credentials' => ['secret_key' => 'sk_test_x', 'webhook_secret' => 'whsec_x']]);
         PaymentGateway::create(['driver' => 'paypal', 'payment_method_id' => 3, 'currency' => 'USD', 'credentials' => ['client_id' => 'cid', 'client_secret' => 'csec']]);
@@ -252,8 +258,8 @@ class OnlinePaymentTest extends HotelTestCase
 
     public function test_offline_checkout_sends_the_guest_a_confirmation_with_the_invoice_and_alerts_the_hotel(): void
     {
-        \App\Models\Setting::query()->update(['email' => 'front@hotel.test']);
-        \App\Support\Settings::flush();
+        Setting::query()->update(['email' => 'front@hotel.test']);
+        Settings::flush();
 
         $this->post($this->payUrl(), ['method' => 4])->assertRedirect();
 
@@ -274,7 +280,7 @@ class OnlinePaymentTest extends HotelTestCase
         $this->assertSame('EUR', $g->currency);
         $this->assertTrue($g->live);
 
-        $desk = \App\Models\User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'd3@example.com', 'password' => \Illuminate\Support\Facades\Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
+        $desk = User::create(['firstname' => 'F', 'lastname' => 'D', 'email' => 'd3@example.com', 'password' => Hash::make('Passw0rd!'), 'status' => 1, 'usertype' => 1, 'is_admin' => 0]);
         $desk->assignRole('Front Desk');
         $this->actingAs($desk, 'admin')->get('/admin/settings/payment-gateways')->assertForbidden();
     }

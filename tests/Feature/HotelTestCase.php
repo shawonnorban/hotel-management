@@ -3,13 +3,16 @@
 namespace Tests\Feature;
 
 use App\Models\Customerinfo;
-use App\Support\Settings;
 use App\Models\PaymentMethod;
 use App\Models\Roomdetails;
 use App\Models\Setting;
+use App\Models\TblFloor;
 use App\Models\TblRoomnofloorassign;
 use App\Models\TblTaxmgt;
 use App\Models\User;
+use App\Support\Settings;
+use Database\Seeders\ChartOfAccountsSeeder;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,10 +31,10 @@ abstract class HotelTestCase extends TestCase
         parent::setUp();
 
         Settings::flush();
-        $this->seed(\Database\Seeders\RolesAndPermissionsSeeder::class);
-        $this->seed(\Database\Seeders\ChartOfAccountsSeeder::class);
+        $this->seed(RolesAndPermissionsSeeder::class);
+        $this->seed(ChartOfAccountsSeeder::class);
 
-        \App\Models\TblFloor::create(['floorid' => 1, 'floorname' => 'Ground', 'status' => 1]);
+        TblFloor::create(['floorid' => 1, 'floorname' => 'Ground', 'status' => 1]);
         Setting::create(['id' => 2, 'title' => 'Test Hotel', 'servicecharge' => 10, 'splash_logo' => '', 'timezone' => 'UTC', 'checkintime' => '14:00', 'checkouttime' => '12:00', 'dateformat' => 'Y-m-d']);
         TblTaxmgt::create(['taxname' => 'VAT', 'rate' => 5, 'isactive' => 1]);
         foreach ([[1, 'Card Payment', 0], [3, 'Paypal', 1], [4, 'Cash Payment', 1]] as [$id, $name, $active]) {

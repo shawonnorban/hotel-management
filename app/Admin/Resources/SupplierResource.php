@@ -4,6 +4,7 @@ namespace App\Admin\Resources;
 
 use App\Admin\Field;
 use App\Admin\Resource;
+use App\Models\Purchase;
 use App\Models\Supplier;
 use Illuminate\Database\Eloquent\Model;
 
@@ -50,6 +51,6 @@ class SupplierResource extends Resource
 
     public function deleteBlockedReason(Model $model): ?string
     {
-        return \App\Models\Purchase::where('supplier_id', $model->id)->exists() ? 'This supplier has purchases. Mark it inactive instead.' : null;
+        return Purchase::where('supplier_id', $model->id)->exists() ? 'This supplier has purchases. Mark it inactive instead.' : null;
     }
 }

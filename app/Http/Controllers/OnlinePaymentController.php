@@ -14,9 +14,7 @@ use Illuminate\Http\Request;
  */
 class OnlinePaymentController extends Controller
 {
-    public function __construct(private OnlinePaymentService $online)
-    {
-    }
+    public function __construct(private OnlinePaymentService $online) {}
 
     public function return(Request $request, string $driver)
     {

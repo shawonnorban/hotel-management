@@ -5,6 +5,7 @@ namespace App\Admin\Resources;
 use App\Admin\Field;
 use App\Admin\Resource;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
@@ -32,7 +33,7 @@ class StaffResource extends Resource
         return ['roles'];
     }
 
-    public function query(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    public function query(Builder $query): Builder
     {
         return $query->where('usertype', 1);
     }

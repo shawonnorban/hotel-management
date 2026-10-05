@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BookedInfo;
 use App\Models\PaymentMethod;
 use App\Models\Roomdetails;
-use App\Services\BookingService;
 use App\Services\BookingNotifier;
+use App\Services\BookingService;
 use App\Services\InvoiceService;
 use App\Services\OnlinePaymentService;
 use App\Services\ReservationService;
@@ -98,7 +98,7 @@ class BookingController extends Controller
             }
             try {
                 return redirect()->away($this->online->start($booking, $gateway));
-            } catch (\InvalidArgumentException|RuntimeException $e) {
+            } catch (InvalidArgumentException|RuntimeException $e) {
                 return back()->withErrors(['method' => $e->getMessage()]);
             }
         }
