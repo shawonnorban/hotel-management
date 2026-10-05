@@ -351,6 +351,8 @@ class Hotel extends CI_Controller
 					'UserEmail' => $email
 				);
 				$this->session->set_userdata($sessiondata);
+			} else {
+				$customerid = $this->session->userdata('UserID');
 			}
 
 			$data_items = array(
@@ -364,7 +366,7 @@ class Hotel extends CI_Controller
 				'checkout'   => $checkoutdate,
 				'adult'      => $adult,
 				'children'   => $children,
-				'tax'        => $tax,
+				'tax'        => $taxamount,
 				'scharge'    => $servicetharge,
 				'discount'   => $discount,
 				'customerid' => $customerid,

@@ -79,6 +79,9 @@ public function update_attn($data = array())
 
     /********* Repor Start  #################% ********/
      public function userReport($format_start_date,$format_end_date){
+      if (empty($format_start_date) || empty($format_end_date)) {
+        return array();
+      }
       
 $this->db->select('e.*,count(DISTINCT(p.emp_his_id)) as emp_his_id,p.employee_id,p.first_name,p.last_name');
 
