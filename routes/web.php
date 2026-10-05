@@ -120,6 +120,40 @@ Route::prefix('admin')->name('admin.')->group(function () {
             });
         });
 
+        Route::prefix('hr')->name('hr.')->group(function () {
+            Route::get('/attendance', [Admin\Hr\AttendanceController::class, 'sheet'])->middleware('can:hr-attendance.manage')->name('attendance');
+            Route::get('/attendance/report', [Admin\Hr\AttendanceController::class, 'report'])->middleware('can:hr-attendance.manage')->name('attendance.report');
+            Route::middleware('can:hr-attendance.manage')->group(function () {
+                Route::post('/attendance', [Admin\Hr\AttendanceController::class, 'save'])->name('attendance.save');
+                Route::put('/attendance/weekly-off', [Admin\Hr\AttendanceController::class, 'weeklyOff'])->name('attendance.weekly-off');
+            });
+            Route::get('/leave', [Admin\Hr\LeaveController::class, 'index'])->middleware('can:hr-leave.manage')->name('leave.index');
+            Route::middleware('can:hr-leave.manage')->group(function () {
+                Route::post('/leave', [Admin\Hr\LeaveController::class, 'store'])->name('leave.store');
+                Route::post('/leave/{leaveRequest}/decide', [Admin\Hr\LeaveController::class, 'decide'])->name('leave.decide');
+            });
+            Route::middleware('can:hr-loans.manage')->group(function () {
+                Route::get('/loans', [Admin\Hr\LoanController::class, 'index'])->name('loans.index');
+                Route::post('/loans', [Admin\Hr\LoanController::class, 'store'])->name('loans.store');
+            });
+            Route::middleware('can:hr-payroll.view')->group(function () {
+                Route::get('/payroll', [Admin\Hr\PayrollController::class, 'index'])->name('payroll.index');
+                Route::get('/payroll/{run}', [Admin\Hr\PayrollController::class, 'show'])->whereNumber('run')->name('payroll.show');
+                Route::get('/payroll/{run}/export', [Admin\Hr\PayrollController::class, 'export'])->whereNumber('run')->name('payroll.export');
+                Route::get('/payroll/{run}/payslip/{item}', [Admin\Hr\PayrollController::class, 'payslip'])->whereNumber(['run', 'item'])->name('payroll.payslip');
+                Route::get('/employees/{employee}/salary', [Admin\Hr\EmployeeController::class, 'salary'])->name('employees.salary');
+            });
+            Route::middleware('can:hr-payroll.run')->group(function () {
+                Route::post('/payroll', [Admin\Hr\PayrollController::class, 'generate'])->name('payroll.generate');
+                Route::post('/payroll/{run}/finalize', [Admin\Hr\PayrollController::class, 'finalize'])->name('payroll.finalize');
+                Route::post('/payroll/{run}/reopen', [Admin\Hr\PayrollController::class, 'reopen'])->name('payroll.reopen');
+                Route::post('/payroll/{run}/pay', [Admin\Hr\PayrollController::class, 'pay'])->name('payroll.pay');
+                Route::delete('/payroll/{run}', [Admin\Hr\PayrollController::class, 'destroy'])->name('payroll.destroy');
+                Route::put('/employees/{employee}/salary', [Admin\Hr\EmployeeController::class, 'updateSalary'])->name('employees.salary.update');
+            });
+            Route::post('/candidates/{candidate}/hire', [Admin\Hr\EmployeeController::class, 'hire'])->middleware('can:hr-employees.create')->name('candidates.hire');
+        });
+
         Route::prefix('purchasing')->group(function () {
             Route::middleware('can:purchases.create')->group(function () {
                 Route::get('/purchases/create', [Admin\PurchaseController::class, 'create'])->name('purchases.create');

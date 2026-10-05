@@ -67,6 +67,16 @@ abstract class Resource
         return null;
     }
 
+    /**
+     * Extra buttons on each row: [['label' => 'Hire', 'icon' => 'bi-person-plus', 'url' => '…', 'method' => 'post'|'get', 'permission' => '…'?]].
+     *
+     * @return list<array{label:string,icon?:string,url:string,method?:string,permission?:string}>
+     */
+    public function rowActions(Model $row): array
+    {
+        return [];
+    }
+
     public function modelInstance(): Model
     {
         return new (static::$model);

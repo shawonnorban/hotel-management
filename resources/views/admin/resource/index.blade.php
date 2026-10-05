@@ -25,6 +25,15 @@
                 <tr>
                     @foreach ($listed as $field)<td>{{ \App\Admin\Formatter::cell($field, $row) }}</td>@endforeach
                     <td class="text-end text-nowrap">
+                        @foreach ($res->rowActions($row) as $action)
+                            @if (empty($action['permission']) || auth('admin')->user()->can($action['permission']))
+                                @if (($action['method'] ?? 'get') === 'post')
+                                    <form method="post" action="{{ $action['url'] }}" class="d-inline">@csrf<button class="btn btn-sm btn-outline-secondary" title="{{ $action['label'] }}"><i class="bi {{ $action['icon'] ?? 'bi-play' }} me-1"></i>{{ $action['label'] }}</button></form>
+                                @else
+                                    <a class="btn btn-sm btn-outline-secondary" href="{{ $action['url'] }}" title="{{ $action['label'] }}"><i class="bi {{ $action['icon'] ?? 'bi-arrow-right' }} me-1"></i>{{ $action['label'] }}</a>
+                                @endif
+                            @endif
+                        @endforeach
                         @can($res::$slug.'.edit')<a class="btn btn-sm btn-outline-primary" href="{{ route('admin.resource.edit', [$res::$slug, $row->getKey()]) }}"><i class="bi bi-pencil"></i></a>@endcan
                         @can($res::$slug.'.delete')
                             <form method="post" action="{{ route('admin.resource.destroy', [$res::$slug, $row->getKey()]) }}" class="d-inline" data-confirm="Delete this {{ strtolower($res::$singular) }}? This cannot be undone.">
