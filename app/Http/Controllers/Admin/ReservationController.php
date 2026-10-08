@@ -71,9 +71,9 @@ class ReservationController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.reservations.form', $this->formData(null) + [
+        return view('admin.reservations.form', array_merge($this->formData(null), [
             'prefill' => $request->only(['checkin', 'checkout', 'room', 'guest']),
-        ]);
+        ]));
     }
 
     public function store(Request $request)

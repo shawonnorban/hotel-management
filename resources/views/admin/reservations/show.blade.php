@@ -77,7 +77,7 @@
             @if ($booking->full_guest_name && $booking->full_guest_name !== $booking->customer?->full_name)<div class="small text-body-secondary">Staying: {{ $booking->full_guest_name }}</div>@endif
             <div class="small mt-2"><i class="bi bi-telephone me-2"></i>{{ $booking->customer?->cust_phone ?: '—' }}</div>
             <div class="small"><i class="bi bi-envelope me-2"></i>{{ $booking->customer?->email ?: '—' }}</div>
-            @can('customers.view')@if ($booking->customer)<a class="small d-inline-block mt-2" href="{{ route('admin.resource.edit', ['customers', $booking->customer->customerid]) }}">Open guest record</a>@endif @endcan
+            @can('customers.view')@if ($booking->customer)<a class="small d-inline-block mt-2" href="{{ route('admin.guests.show', $booking->customer->customerid) }}">Open guest record</a>@endif @endcan
         </div></div>
         <div class="card"><div class="card-header">Activity</div><ul class="list-group list-group-flush">
             @forelse ($booking->events as $e)

@@ -29,7 +29,7 @@
                 </div>
             @endif
         @endforeach
-        <div class="mt-auto p-3 small text-center" style="color:#5f7584">v{{ config('hotel.version') }}</div>
+        <div class="mt-auto p-3 small text-center" style="color:var(--sb-muted)">v{{ config('hotel.version') }}</div>
     </aside>
     <div class="app-main">
         <header class="topbar">

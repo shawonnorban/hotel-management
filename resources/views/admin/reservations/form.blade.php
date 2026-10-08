@@ -19,8 +19,8 @@
     <div class="card mb-4"><div class="card-header fw-semibold"><span class="px-2 py-1 rounded text-white" style="background:var(--brand,#0f766e)">Reservation Details</span>
         <a href="{{ route('admin.reservations.index') }}" class="btn btn-sm btn-primary float-end"><i class="bi bi-list-ul me-1"></i>Check In List</a></div>
         <div class="card-body row g-3">
-            <div class="col-md-3"><label class="form-label small fw-semibold">Check In <span class="text-danger">*</span></label><input name="checkin" id="checkin" class="form-control" data-date value="{{ $val('checkin') }}" required autocomplete="off"><div class="form-text" id="inTime"></div></div>
-            <div class="col-md-3"><label class="form-label small fw-semibold">Check Out <span class="text-danger">*</span></label><input name="checkout" id="checkout" class="form-control" data-date value="{{ $val('checkout') }}" required autocomplete="off"><div class="form-text" id="outTime"></div></div>
+            <div class="col-md-3"><label class="form-label small fw-semibold">Check In <span class="text-danger">*</span></label><input name="checkin" id="checkin" class="form-control" data-date value="{{ $val('checkin', $editing ? null : today()->toDateString()) }}" required autocomplete="off"><div class="form-text" id="inTime"></div></div>
+            <div class="col-md-3"><label class="form-label small fw-semibold">Check Out <span class="text-danger">*</span></label><input name="checkout" id="checkout" class="form-control" data-date value="{{ $val('checkout', $editing ? null : today()->addDay()->toDateString()) }}" required autocomplete="off"><div class="form-text" id="outTime"></div></div>
             <div class="col-md-3"><label class="form-label small fw-semibold">Arrival From</label><input name="arrival_from" class="form-control" value="{{ old('arrival_from') }}" placeholder="Arrival from"></div>
             <div class="col-md-3"><label class="form-label small fw-semibold">Booking Type</label><select name="source" class="form-select">@foreach ($sources as $k => $l)<option value="{{ $k }}" @selected(old('source', 'phone') === $k)>{{ $l }}</option>@endforeach</select></div>
             <div class="col-md-3"><label class="form-label small fw-semibold">Choose Booking Reference</label><select name="booking_source" class="form-select"><option value="">— Choose —</option>@foreach ($references as $r)<option @selected(old('booking_source') === $r)>{{ $r }}</option>@endforeach</select></div>
@@ -210,6 +210,18 @@
     }
     window.addEventListener('DOMContentLoaded', function () {
         ['checkin', 'checkout'].forEach(function (f) { var el = $(f); if (el && el._flatpickr) { el._flatpickr.config.onChange.push(schedule); } });
+        // Check-out can only be after check-in: follow the arrival date and offer the next day.
+        var ci = $('checkin'), co = $('checkout');
+        if (ci && co && ci._flatpickr && co._flatpickr) {
+            var sync = function () {
+                var d = ci._flatpickr.selectedDates[0]; if (!d) { return; }
+                var min = new Date(d.getTime()); min.setDate(min.getDate() + 1);
+                co._flatpickr.set('minDate', min);
+                var c = co._flatpickr.selectedDates[0];
+                if (!c || c <= d) { co._flatpickr.setDate(min, true); }
+            };
+            ci._flatpickr.config.onChange.push(sync); sync();
+        }
         refresh();
     });
 })();

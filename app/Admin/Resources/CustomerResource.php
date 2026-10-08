@@ -93,6 +93,11 @@ class CustomerResource extends Resource
         }
     }
 
+    public function rowActions(Model $row): array
+    {
+        return [['label' => 'View', 'icon' => 'bi-eye', 'url' => route('admin.guests.show', $row->getKey()), 'permission' => 'customers.view']];
+    }
+
     public function deleteBlockedReason(Model $model): ?string
     {
         return $model->bookings()->exists() ? 'This guest has bookings and cannot be deleted. Deactivate the account instead.' : null;

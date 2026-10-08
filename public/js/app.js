@@ -43,6 +43,34 @@
         });
     });
 
+
+    // Photos from phones are often several MB; shrink big images in the browser so uploads stay under the server limit.
+    document.addEventListener('change', function (e) {
+        var input = e.target;
+        if (!input || input.type !== 'file' || !/image/.test(input.accept || '') || !window.DataTransfer || !input.files) { return; }
+        var files = Array.prototype.slice.call(input.files);
+        if (!files.some(function (f) { return f.size > 1200 * 1024 && /^image\/(jpeg|png|webp)$/.test(f.type); })) { return; }
+        Promise.all(files.map(function (file) {
+            if (file.size <= 1200 * 1024 || !/^image\/(jpeg|png|webp)$/.test(file.type)) { return file; }
+            return new Promise(function (resolve) {
+                var img = new Image(), url = URL.createObjectURL(file);
+                img.onload = function () {
+                    var max = 1800, k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+                    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    c.toBlob(function (blob) {
+                        URL.revokeObjectURL(url);
+                        resolve(blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : file);
+                    }, 'image/jpeg', 0.85);
+                };
+                img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+                img.src = url;
+            });
+        })).then(function (out) {
+            var dt = new DataTransfer(); out.forEach(function (f) { dt.items.add(f); }); input.files = dt.files;
+        });
+    });
+
     // Enhanced widgets ------------------------------------------------------
     window.addEventListener('DOMContentLoaded', function () {
         if (window.flatpickr) {

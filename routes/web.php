@@ -98,6 +98,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/settings/payment-gateways/{driver}', [Admin\PaymentGatewayController::class, 'update'])->where('driver', 'stripe|paypal|sslcommerz')->name('gateways.update');
         });
 
+        Route::get('/guests/{customer}', [Admin\GuestController::class, 'show'])->whereNumber('customer')->middleware('can:customers.view')->name('guests.show');
         Route::middleware('can:reservations.view')->group(function () {
             Route::get('/advance-bookings', [Admin\AdvanceBookingController::class, 'index'])->name('advance.index');
         });

@@ -111,6 +111,16 @@ class ReservationTest extends HotelTestCase
         $this->assertSame(1, BookedInfo::count());
     }
 
+    public function test_guest_profile_page_shows_history_and_is_linked_from_the_booking(): void
+    {
+        $b = $this->create();
+        $this->get('/admin/reservations/'.$b->booking_number)->assertOk()->assertSee('/admin/guests/'.$this->guest->customerid, false);
+        $this->get('/admin/guests/'.$this->guest->customerid)->assertOk()->assertSee('Ada Guest')->assertSee('#'.$b->booking_number)->assertSee('Stay history');
+        $this->get('/admin/customers')->assertOk()->assertSee('/admin/guests/'.$this->guest->customerid, false);
+        $this->get('/admin/reservations/create?guest='.$this->guest->customerid)->assertOk()->assertSee('Ada Guest');
+        $this->get('/admin/guests/99999')->assertNotFound();
+    }
+
     public function test_old_customer_search_and_quote_with_discount(): void
     {
         $this->get('/admin/reservations/customers?q=0170')->assertOk()->assertJsonFragment(['phone' => '0170000001']);
