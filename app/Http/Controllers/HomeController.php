@@ -25,7 +25,7 @@ class HomeController extends Controller
     {
         return RoomImage::query()
             ->whereIn('room_id', $roomIds)
-            ->orderBy('room_img_id')
+            ->ordered()
             ->get()
             ->unique('room_id')
             ->pluck('room_imagename', 'room_id');

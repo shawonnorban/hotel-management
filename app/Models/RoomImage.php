@@ -13,4 +13,10 @@ class RoomImage extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    /** Cover photo first, then in upload order. */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('room_img_id');
+    }
 }

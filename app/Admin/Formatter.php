@@ -40,7 +40,7 @@ class Formatter
         return match ($field->type) {
             'toggle' => $value ? 'Yes' : 'No',
             'select' => (string) ($field->resolveOptions()[$value] ?? $value),
-            'password', 'image' => '',
+            'password', 'image', 'images' => '',
             default => (string) $value,
         };
     }

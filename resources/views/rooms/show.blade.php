@@ -12,20 +12,32 @@
                 <span><i class="bi bi-aspect-ratio me-1"></i>{{ $room->size_label }}</span>
                 @if ($room->bedType)<span><i class="bi bi-moon-stars me-1"></i>{{ $room->bedsno }} {{ $room->bedType->bedstypetitle }} bed(s)</span>@endif
             </div>
-            @php($gallery = $images->isEmpty() ? collect(['assets/img/room_search.png']) : $images)
-            <div id="gallery" class="carousel slide mb-4 rounded-3 overflow-hidden shadow-sm" data-bs-ride="false">
-                <div class="carousel-inner">
-                    @foreach ($gallery as $image)<div class="carousel-item {{ $loop->first ? 'active' : '' }}"><img src="{{ asset($image) }}" class="d-block w-100" style="height:420px;object-fit:cover" alt="{{ $room->roomtype }}"></div>@endforeach
+            @php($gallery = $images->isEmpty() ? collect(['assets/img/room_search.png']) : $images->values())
+            <div class="zoomable mb-4">
+                <div id="gallery" class="carousel slide rounded overflow-hidden shadow-sm" data-bs-ride="false" data-bs-interval="false">
+                    <div class="carousel-inner">
+                        @foreach ($gallery as $image)<div class="carousel-item {{ $loop->first ? 'active' : '' }}"><img src="{{ asset($image) }}" class="d-block w-100" style="height:420px;object-fit:cover;cursor:zoom-in" alt="{{ $room->roomtype }} photo {{ $loop->iteration }}"></div>@endforeach
+                    </div>
+                    @if ($gallery->count() > 1)
+                        <button class="carousel-control-prev" type="button" data-bs-target="#gallery" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#gallery" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+                    @endif
                 </div>
                 @if ($gallery->count() > 1)
-                    <button class="carousel-control-prev" type="button" data-bs-target="#gallery" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#gallery" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+                    <div class="d-flex gap-2 mt-2 overflow-auto pb-1">
+                        @foreach ($gallery as $image)<button type="button" class="p-0 border-0 bg-transparent flex-shrink-0" data-bs-target="#gallery" data-bs-slide-to="{{ $loop->index }}" aria-label="Photo {{ $loop->iteration }}"><img src="{{ asset($image) }}" width="96" height="64" style="object-fit:cover;cursor:pointer" class="rounded border no-zoom" alt=""></button>@endforeach
+                    </div>
                 @endif
             </div>
             <p class="lead fs-6">{{ $room->roomdescription }}</p>
             @if ($facilities->isNotEmpty())
                 <h2 class="h5 mt-4">Facilities</h2>
-                <div class="row g-2">@foreach ($facilities as $facility)<div class="col-6 col-md-4"><i class="bi bi-check2-circle text-brand me-2"></i>{{ $facility }}</div>@endforeach</div>
+                <div class="row g-3">
+                    @foreach ($facilities as $type => $items)
+                        <div class="col-md-6"><div class="small text-uppercase text-body-secondary fw-semibold mb-1" style="letter-spacing:.06em">{{ $type }}</div>
+                            @foreach ($items as $facility)<div class="mb-1">@if ($facility->icon)<img src="{{ asset($facility->icon) }}" width="18" height="18" class="me-2 no-zoom" alt="">@else<i class="bi bi-check2-circle text-brand me-2"></i>@endif{{ $facility->title }}</div>@endforeach</div>
+                    @endforeach
+                </div>
             @endif
             @if ($room->reservecondition)<h2 class="h5 mt-4">Booking conditions</h2><div class="text-body-secondary small">{!! nl2br(e($room->reservecondition)) !!}</div>@endif
         </div>

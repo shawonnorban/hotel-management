@@ -42,7 +42,7 @@ class RoomController extends Controller
             'available' => $available,
             'search' => $search,
             'searched' => $checkin && $checkout,
-            'images' => RoomImage::whereIn('room_id', $rooms->pluck('roomid'))->orderBy('room_img_id')->get()->unique('room_id')->pluck('room_imagename', 'room_id'),
+            'images' => RoomImage::whereIn('room_id', $rooms->pluck('roomid'))->ordered()->get()->unique('room_id')->pluck('room_imagename', 'room_id'),
         ]);
     }
 
@@ -66,16 +66,19 @@ class RoomController extends Controller
             $quote = $this->booking->quote($room, $checkin, $checkout, (int) ($search['rooms'] ?? 1));
         }
 
+        // Facilities grouped by their type ("Bathroom", "Entertainment", …) for the room page.
         $facilities = RoomfailityRefAccomodation::query()
             ->where('room_id', $room->roomid)
             ->join('roomfacilitydetails', 'roomfacilitydetails.facilityid', '=', 'roomfaility_ref_accomodation.facilityid')
-            ->orderBy('roomfacilitydetails.facilitytitle')
-            ->pluck('roomfacilitydetails.facilitytitle');
+            ->leftJoin('roomfacilitytype', 'roomfacilitytype.facilitytypeid', '=', 'roomfacilitydetails.facilitytypeid')
+            ->orderBy('roomfacilitytype.facilitytypetitle')->orderBy('roomfacilitydetails.facilitytitle')
+            ->get(['roomfacilitydetails.facilitytitle as title', 'roomfacilitydetails.image as icon', 'roomfacilitytype.facilitytypetitle as type'])
+            ->groupBy(fn ($f) => $f->type ?: 'Facilities');
 
         return view('rooms.show', [
             'room' => $room,
             'facilities' => $facilities,
-            'images' => RoomImage::where('room_id', $room->roomid)->orderBy('room_img_id')->pluck('room_imagename'),
+            'images' => RoomImage::where('room_id', $room->roomid)->ordered()->pluck('room_imagename'),
             'search' => $search,
             'quote' => $quote,
             'free' => $free,

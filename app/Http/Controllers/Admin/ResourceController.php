@@ -153,6 +153,12 @@ class ResourceController extends Controller
         $rules = [];
         foreach ($this->dataFields($res) as $field) {
             $rules[$field->name] = $field->validationRules($model, $table);
+            if ($field->type === 'images') {
+                $rules[$field->name.'.*'] = ['image', 'max:6144'];
+                $rules['remove_'.$field->name] = ['nullable', 'array'];
+                $rules['remove_'.$field->name.'.*'] = ['integer'];
+                $rules['cover_'.$field->name] = ['nullable', 'integer'];
+            }
             if ($field->type === 'multiselect') {
                 $rules[$field->name.'.*'] = [Rule::in(array_keys($field->resolveOptions()))];
             }
@@ -173,6 +179,16 @@ class ResourceController extends Controller
                     $this->deleteUpload($model?->getAttribute($name));
                     $data[$name] = 'storage/'.$request->file($name)->store('uploads/'.$res::$slug, 'public');
                 }
+
+                continue;
+            }
+
+            if ($field->type === 'images') {
+                $data[$name] = [
+                    'new' => collect($request->file($name, []))->filter()->map(fn ($f) => 'storage/'.$f->store('uploads/'.$res::$slug, 'public'))->values()->all(),
+                    'remove' => array_map('intval', $validated['remove_'.$name] ?? []),
+                    'cover' => isset($validated['cover_'.$name]) ? (int) $validated['cover_'.$name] : null,
+                ];
 
                 continue;
             }
@@ -206,7 +222,7 @@ class ResourceController extends Controller
 
     private function exportCsv(Resource $res, $query): StreamedResponse
     {
-        $fields = collect($res->fields())->reject(fn (Field $f) => in_array($f->type, ['password', 'image', 'heading'], true));
+        $fields = collect($res->fields())->reject(fn (Field $f) => in_array($f->type, ['password', 'image', 'images', 'heading'], true));
 
         return response()->streamDownload(function () use ($query, $fields) {
             $out = fopen('php://output', 'w');

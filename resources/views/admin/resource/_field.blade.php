@@ -39,6 +39,21 @@
             @if ($record && $value)<div class="mb-2"><img src="{{ asset($value) }}" alt="" class="rounded border" style="height:80px"></div>@endif
             <input type="file" id="{{ $id }}" name="{{ $name }}" accept="image/*" class="form-control{{ $invalid }}">
             @break
+        @case('images')
+            @if ($record && is_array($value) && count($value))
+                <div class="row g-2 mb-2">
+                    @foreach ($value as $img)
+                        <div class="col-6 col-md-3 col-xl-2"><div class="border rounded p-2 h-100 text-center">
+                            <img src="{{ asset($img['path']) }}" alt="" class="rounded w-100" style="height:90px;object-fit:cover">
+                            <div class="form-check small mt-2 text-start"><input class="form-check-input" type="radio" name="cover_{{ $name }}" value="{{ $img['id'] }}" id="cv{{ $img['id'] }}" @checked($loop->first)><label class="form-check-label" for="cv{{ $img['id'] }}">Cover photo</label></div>
+                            <div class="form-check small text-start"><input class="form-check-input" type="checkbox" name="remove_{{ $name }}[]" value="{{ $img['id'] }}" id="rm{{ $img['id'] }}"><label class="form-check-label text-danger" for="rm{{ $img['id'] }}">Remove</label></div>
+                        </div></div>
+                    @endforeach
+                </div>
+            @endif
+            <input type="file" id="{{ $id }}" name="{{ $name }}[]" accept="image/*" multiple class="form-control{{ $invalid }}">
+            <div class="form-text">You can select several pictures at once. All of them appear on the website; the cover photo is the one shown on room cards.</div>
+            @break
         @case('date')
             <input type="text" id="{{ $id }}" name="{{ $name }}" value="{{ $value ? \Illuminate\Support\Carbon::parse($value)->format('Y-m-d') : '' }}" class="form-control{{ $invalid }}" data-date placeholder="YYYY-MM-DD" autocomplete="off">
             @break

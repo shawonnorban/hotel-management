@@ -131,6 +131,20 @@ class Field
         return static::make($name, $label, 'image');
     }
 
+    /**
+     * Several uploaded pictures managed together (add many, remove some, pick a cover). The value for an existing
+     * record is a list of ['id' => int, 'path' => string]; the resource's afterSave receives
+     * ['new' => list<string> stored paths, 'remove' => list<int>, 'cover' => ?int].
+     */
+    public static function images(string $name, string $label): static
+    {
+        $field = static::make($name, $label, 'images');
+        $field->virtual = true;
+        $field->col = 12;
+
+        return $field;
+    }
+
     /** @param array<int|string,string>|Closure():array<int|string,string> $options */
     public static function select(string $name, string $label, array|Closure $options): static
     {
@@ -259,6 +273,7 @@ class Field
             'datetime' => ['date'],
             'toggle' => ['boolean'],
             'image' => ['image', 'max:4096'],
+            'images' => ['nullable', 'array', 'max:30'],
             'select' => [],
             'multiselect' => ['array'],
             default => ['string'],

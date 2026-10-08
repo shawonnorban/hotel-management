@@ -7,7 +7,13 @@ use App\Models\Customerinfo;
 use App\Models\Page;
 use App\Models\Promocode;
 use App\Models\TblFloor;
+use App\Models\RoomImage;
+use App\Models\Roomfacilitydetails;
+use App\Models\Roomfacilitytype;
+use App\Models\RoomfailityRefAccomodation;
 use App\Models\TblRoomnofloorassign;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -169,5 +175,55 @@ class ResourceTest extends HotelTestCase
         $this->post('/admin/pages', ['title' => 'About us', 'slug' => '', 'body' => 'Again', 'sort' => 2, 'published' => 1])->assertRedirect('/admin/pages');
 
         $this->assertEqualsCanonicalizing(['about-us', 'about-us-2'], Page::pluck('slug')->all());
+    }
+
+    public function test_room_type_takes_many_facilities_and_many_photos_shown_on_the_website(): void
+    {
+        Storage::fake('public');
+        $type = Roomfacilitytype::create(['facilitytypetitle' => 'Bathroom']);
+        $tv = Roomfacilitytype::create(['facilitytypetitle' => 'Entertainment']);
+        $shower = Roomfacilitydetails::create(['facilitytitle' => 'Rain shower', 'facilitytypeid' => $type->facilitytypeid]);
+        $bath = Roomfacilitydetails::create(['facilitytitle' => 'Bathtub', 'facilitytypeid' => $type->facilitytypeid]);
+        $smart = Roomfacilitydetails::create(['facilitytitle' => 'Smart TV', 'facilitytypeid' => $tv->facilitytypeid]);
+        $this->actingAs($this->staff, 'admin');
+
+        $fields = ['roomtype' => 'Garden View', 'bedstype' => 1, 'bedsno' => 1, 'capacity' => 2, 'roomsize' => 300, 'roomsizemesurement' => 'sqft', 'rate' => 100, 'bedcharge' => 0, 'personcharge' => 0, 'roomdescription' => 'Quiet', 'roomactive' => 1, 'exbedcapability' => 0, 'child_limit' => 0];
+        $this->post('/admin/room-types', $fields + [
+            'facility_ids' => [$shower->facilityid, $smart->facilityid],
+            'gallery' => [UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.jpg'), UploadedFile::fake()->image('c.jpg')],
+        ])->assertSessionHasNoErrors();
+        $room = \App\Models\Roomdetails::where('roomtype', 'Garden View')->firstOrFail();
+        $this->assertSame(2, RoomfailityRefAccomodation::where('room_id', $room->roomid)->count());
+        $this->assertSame(3, RoomImage::where('room_id', $room->roomid)->count());
+        $this->assertSame(1, RoomImage::where('room_id', $room->roomid)->where('sort_order', 0)->count());
+        TblRoomnofloorassign::create(['roomid' => $room->roomid, 'floorid' => 1, 'roomno' => 901, 'status' => 1]);
+
+        // Edit: add a facility, make the last photo the cover, remove the middle one, upload a fourth.
+        $imgs = RoomImage::where('room_id', $room->roomid)->ordered()->get();
+        $this->put('/admin/room-types/'.$room->roomid, $fields + [
+            'facility_ids' => [$shower->facilityid, $bath->facilityid, $smart->facilityid],
+            'cover_gallery' => $imgs[2]->room_img_id, 'remove_gallery' => [$imgs[1]->room_img_id],
+            'gallery' => [UploadedFile::fake()->image('d.jpg')],
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(3, RoomfailityRefAccomodation::where('room_id', $room->roomid)->count());
+        $after = RoomImage::where('room_id', $room->roomid)->ordered()->get();
+        $this->assertCount(3, $after);
+        $this->assertSame($imgs[2]->room_img_id, $after->first()->room_img_id);
+        $this->assertFalse($after->contains('room_img_id', $imgs[1]->room_img_id));
+
+        // Website: every photo in the gallery, facilities grouped by type.
+        $page = $this->get('/rooms/'.$room->roomid)->assertOk();
+        foreach ($after as $img) {
+            $page->assertSee($img->room_imagename);
+        }
+        $page->assertSee('Bathroom')->assertSee('Entertainment')->assertSee('Bathtub')->assertSee('Smart TV');
+
+        // The room list uses the cover photo.
+        $this->get('/rooms')->assertOk()->assertSee($after->first()->room_imagename);
+
+        // Editing without touching the gallery keeps everything.
+        $this->put('/admin/room-types/'.$room->roomid, $fields + ['facility_ids' => [$shower->facilityid]])->assertSessionHasNoErrors();
+        $this->assertSame(1, RoomfailityRefAccomodation::where('room_id', $room->roomid)->count());
+        $this->assertSame(3, RoomImage::where('room_id', $room->roomid)->count());
     }
 }

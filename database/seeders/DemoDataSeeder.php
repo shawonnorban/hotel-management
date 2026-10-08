@@ -140,12 +140,26 @@ class DemoDataSeeder extends Seeder
             $out[$name] = $room;
         }
 
-        $type = Roomfacilitytype::firstOrCreate(['facilitytypetitle' => 'Room amenities']);
-        foreach (['Free WiFi', 'Air conditioning', 'Smart TV', 'Minibar', 'Coffee maker', 'Room service'] as $f) {
-            $facility = Roomfacilitydetails::firstOrCreate(['facilitytitle' => $f], ['facilitytypeid' => $type->facilitytypeid]);
-            foreach ($out as $room) {
-                RoomfailityRefAccomodation::firstOrCreate(['room_id' => $room->roomid, 'facilityid' => $facility->facilityid], ['facilititypeid' => $type->facilitytypeid]);
+        // Facilities grouped by type; bigger rooms get more of them.
+        $catalog = [
+            'Comfort' => ['Air conditioning', 'Free WiFi', 'Coffee maker', 'Work desk', 'Balcony'],
+            'Bathroom' => ['Hot water', 'Rain shower', 'Bathtub', 'Hair dryer'],
+            'Entertainment' => ['Smart TV', 'Satellite channels', 'Bluetooth speaker'],
+            'Services' => ['Room service', 'Daily housekeeping', 'Minibar'],
+        ];
+        $tiers = ['Standard Single' => 0.45, 'Deluxe Double' => 0.7, 'Family Suite' => 0.9, 'Presidential Suite' => 1.0];
+        $facilities = [];
+        foreach ($catalog as $typeTitle => $titles) {
+            $type = Roomfacilitytype::firstOrCreate(['facilitytypetitle' => $typeTitle]);
+            foreach ($titles as $title) {
+                $facilities[] = Roomfacilitydetails::firstOrCreate(['facilitytitle' => $title], ['facilitytypeid' => $type->facilitytypeid]);
             }
+        }
+        foreach ($out as $name => $room) {
+            foreach (array_slice($facilities, 0, (int) ceil(count($facilities) * $tiers[$name])) as $facility) {
+                RoomfailityRefAccomodation::firstOrCreate(['room_id' => $room->roomid, 'facilityid' => $facility->facilityid], ['facilititypeid' => $facility->facilitytypeid]);
+            }
+            $this->roomPhotos($room);
         }
         foreach (['Breakfast' => 500, 'Airport pickup' => 1500, 'Late check-out' => 1000] as $svc => $rate) {
             foreach (array_keys($out) as $roomType) {
@@ -158,6 +172,30 @@ class DemoDataSeeder extends Seeder
         }
 
         return $out;
+    }
+
+    /** Three generated placeholder pictures per room type so the website gallery has something to show. */
+    private function roomPhotos(Roomdetails $room): void
+    {
+        if (! function_exists('imagecreatetruecolor') || \App\Models\RoomImage::where('room_id', $room->roomid)->exists()) {
+            return;
+        }
+        $palette = [[15, 118, 110], [184, 137, 59], [37, 99, 235], [124, 58, 237]];
+        $base = $palette[$room->roomid % count($palette)];
+        \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory('uploads/demo');
+        foreach (['Bedroom', 'Bathroom', 'View'] as $i => $label) {
+            $img = imagecreatetruecolor(1200, 800);
+            for ($y = 0; $y < 800; $y++) {
+                $k = $y / 800;
+                imageline($img, 0, $y, 1200, $y, imagecolorallocate($img, (int) ($base[0] + (255 - $base[0]) * $k * .55), (int) ($base[1] + (255 - $base[1]) * $k * .55), (int) ($base[2] + (255 - $base[2]) * $k * .55)));
+            }
+            imagestring($img, 5, 40, 740, $room->roomtype.' - '.$label, imagecolorallocate($img, 255, 255, 255));
+            $file = 'uploads/demo/room-'.$room->roomid.'-'.($i + 1).'.jpg';
+            ob_start();
+            imagejpeg($img, null, 82);
+            \Illuminate\Support\Facades\Storage::disk('public')->put($file, ob_get_clean());
+            \App\Models\RoomImage::create(['room_id' => $room->roomid, 'room_imagename' => 'storage/'.$file, 'sort_order' => $i === 0 ? 0 : 1]);
+        }
     }
 
     /** @return list<Customerinfo> */
