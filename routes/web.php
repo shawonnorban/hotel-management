@@ -145,6 +145,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::post('/attendance', [Admin\Hr\AttendanceController::class, 'save'])->name('attendance.save');
                 Route::put('/attendance/weekly-off', [Admin\Hr\AttendanceController::class, 'weeklyOff'])->name('attendance.weekly-off');
             });
+            Route::middleware('can:hr-roster.view')->group(function () {
+                Route::get('/roster', [Admin\Hr\RosterController::class, 'index'])->name('roster.index');
+                Route::get('/attendance-dashboard', [Admin\Hr\RosterController::class, 'dashboard'])->name('roster.dashboard');
+            });
+            Route::middleware('can:hr-roster.manage')->group(function () {
+                Route::get('/roster/assign', [Admin\Hr\RosterController::class, 'assignForm'])->name('roster.assign');
+                Route::post('/roster/assign', [Admin\Hr\RosterController::class, 'assign'])->name('roster.assign.store');
+            });
             Route::get('/leave', [Admin\Hr\LeaveController::class, 'index'])->middleware('can:hr-leave.manage')->name('leave.index');
             Route::middleware('can:hr-leave.manage')->group(function () {
                 Route::post('/leave', [Admin\Hr\LeaveController::class, 'store'])->name('leave.store');

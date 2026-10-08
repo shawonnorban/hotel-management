@@ -21,6 +21,8 @@ class Permissions
         'stock.view' => 'View stock levels and movements',
         'stock.adjust' => 'Issue stock, write off and count stock',
         'hr-attendance.manage' => 'Record attendance',
+        'hr-roster.view' => 'View the duty roster and attendance dashboard',
+        'hr-roster.manage' => 'Assign duty rosters',
         'hr-leave.manage' => 'Manage leave requests',
         'hr-loans.manage' => 'Issue staff loans',
         'hr-payroll.view' => 'View payroll and salaries',

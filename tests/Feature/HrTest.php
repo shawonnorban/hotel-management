@@ -13,6 +13,8 @@ use App\Models\HrLeaveType;
 use App\Models\HrLoan;
 use App\Models\HrPayrollRun;
 use App\Models\HrPosition;
+use App\Models\HrRoster;
+use App\Models\HrShift;
 use App\Models\LedgerAccount;
 use App\Models\User;
 use App\Services\Hr\PayrollService;
@@ -76,6 +78,35 @@ class HrTest extends HotelTestCase
         $this->delete(route('admin.hr.employees.records.destroy', [$anna, 'documents', $doc->id]))->assertRedirect();
         $this->assertSame(0, $anna->documents()->count());
         $this->post(route('admin.hr.employees.records.store', [$anna, 'bogus']), ['x' => 1])->assertNotFound();
+    }
+
+    public function test_duty_roster_assignment_list_and_dashboard(): void
+    {
+        $this->post('/admin/hr-shifts', ['name' => 'Morning', 'starts_at' => '06:00', 'ends_at' => '14:00', 'color' => '#0f766e', 'is_active' => 1])->assertSessionHasNoErrors();
+        $this->post('/admin/hr-shifts', ['name' => 'Bad', 'starts_at' => '06:00', 'ends_at' => '14:00', 'color' => 'red'])->assertSessionHasErrors('color');
+        $shift = HrShift::firstOrFail();
+
+        // Monday 2026-03-02 to Sunday 2026-03-08, weekdays only (Mon-Fri), two people.
+        $this->post('/admin/hr/roster/assign', ['employees' => [$this->anna->id, $this->ben->id], 'from' => '2026-03-02', 'to' => '2026-03-08', 'shift' => (string) $shift->id, 'weekdays' => [1, 2, 3, 4, 5]])->assertSessionHasNoErrors();
+        $this->assertSame(10, HrRoster::count());
+
+        // Re-assigning replaces rather than duplicates; a day off keeps the row without a shift.
+        $this->post('/admin/hr/roster/assign', ['employees' => [$this->anna->id], 'from' => '2026-03-02', 'to' => '2026-03-02', 'shift' => 'off'])->assertSessionHasNoErrors();
+        $this->assertSame(10, HrRoster::count());
+        $this->assertNull(HrRoster::where('employee_id', $this->anna->id)->whereDate('work_date', '2026-03-02')->first()->shift_id);
+
+        $this->post('/admin/hr/roster/assign', ['employees' => [$this->ben->id], 'from' => '2026-03-03', 'to' => '2026-03-03', 'shift' => 'clear']);
+        $this->assertSame(9, HrRoster::count());
+
+        $this->post('/admin/hr/roster/assign', ['employees' => [$this->anna->id], 'from' => '2026-01-01', 'to' => '2026-12-31', 'shift' => (string) $shift->id])->assertSessionHasErrors('to');
+
+        $this->get('/admin/hr/roster?from=2026-03-02&to=2026-03-08')->assertOk()->assertSee('Anna Lee')->assertSee('Morning');
+
+        HrAttendance::create(['employee_id' => $this->anna->id, 'work_date' => '2026-03-04', 'status' => 'present']);
+        $this->get('/admin/hr/attendance-dashboard?date=2026-03-04')->assertOk()->assertSee('Rostered but not checked in')->assertSee('Ben Ng');
+
+        $this->delete('/admin/hr-shifts/'.$shift->id)->assertSessionHasErrors();
+        $this->assertDatabaseHas('hr_shifts', ['id' => $shift->id]);
     }
 
     public function test_basic_payroll_run(): void
