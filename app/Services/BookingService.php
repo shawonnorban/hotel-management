@@ -90,8 +90,8 @@ class BookingService
         return $used ? null : $promo;
     }
 
-    /** @return array{nights:int,rate:float,rooms:int,subtotal:float,discount:float,tax:float,service:float,total:float,offer:int,promo:int} */
-    public function quote(Roomdetails $room, Carbon $checkin, Carbon $checkout, int $rooms, ?Promocode $promo = null): array
+    /** @return array{nights:int,rate:float,rooms:int,subtotal:float,discount:float,tax:float,service:float,total:float,offer:int,promo:int,manual_discount:float} */
+    public function quote(Roomdetails $room, Carbon $checkin, Carbon $checkout, int $rooms, ?Promocode $promo = null, float $manualPercent = 0): array
     {
         $nights = $this->nights($checkin, $checkout);
         $subtotal = round((float) $room->rate * $nights * $rooms, 2);
@@ -99,7 +99,11 @@ class BookingService
         $offer = $this->offerPercent($room);
         $afterOffer = $subtotal - round($subtotal * $offer / 100, 2);
         $promoPercent = $promo ? (int) $promo->discount : 0;
-        $net = round($afterOffer - round($afterOffer * $promoPercent / 100, 2), 2);
+        $afterPromo = round($afterOffer - round($afterOffer * $promoPercent / 100, 2), 2);
+        // Discount a clerk grants by hand, on top of the offer and promo code.
+        $manualPercent = max(0, min(100, $manualPercent));
+        $manual = round($afterPromo * $manualPercent / 100, 2);
+        $net = round($afterPromo - $manual, 2);
         $discount = round($subtotal - $net, 2);
 
         $taxRate = (float) TblTaxmgt::where('isactive', 1)->sum('rate');
@@ -119,6 +123,7 @@ class BookingService
             'total' => round($net + $tax + $service, 2),
             'offer' => $offer,
             'promo' => $promoPercent,
+            'manual_discount' => $manual,
         ];
     }
 
@@ -141,6 +146,8 @@ class BookingService
         ?Promocode $promo = null,
         string $status = '0',
         string $source = 'website',
+        array $extras = [],
+        array $wantedRooms = [],
     ): BookedInfo {
         if ($checkout->lte($checkin)) {
             throw new InvalidArgumentException('Check-out must be after check-in.');
@@ -148,8 +155,11 @@ class BookingService
         if ($adults + $children > max(1, (int) $room->capacity) * $rooms) {
             throw new InvalidArgumentException('The selected rooms cannot accommodate this many guests.');
         }
+        if ($wantedRooms && count($wantedRooms) !== $rooms) {
+            throw new InvalidArgumentException('Choose exactly '.$rooms.' room number(s), or leave the choice empty to have them picked for you.');
+        }
 
-        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $specialRequest, $promo, $status, $source) {
+        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $specialRequest, $promo, $status, $source, $extras, $wantedRooms) {
             // Serialise concurrent bookings of the same hotel so two guests cannot get the same room number.
             BookedInfo::query()->lockForUpdate()->orderByDesc('bookedid')->first();
 
@@ -162,8 +172,16 @@ class BookingService
                 throw new InvalidArgumentException('That promo code can no longer be used.');
             }
 
-            $quote = $this->quote($room, $checkin, $checkout, $rooms, $promo);
-            $roomNumbers = array_slice($free, 0, $rooms);
+            $quote = $this->quote($room, $checkin, $checkout, $rooms, $promo, (float) ($extras['discount_percent'] ?? 0));
+            if ($wantedRooms) {
+                $wantedRooms = array_map('strval', $wantedRooms);
+                if (array_diff($wantedRooms, $free)) {
+                    throw new RuntimeException('One of the chosen rooms is not available for those dates.');
+                }
+                $roomNumbers = array_values(array_unique($wantedRooms));
+            } else {
+                $roomNumbers = array_slice($free, 0, $rooms);
+            }
             $perRoom = fn (int $total) => implode(',', array_map(fn ($i) => intdiv($total, $rooms) + ($i < $total % $rooms ? 1 : 0), range(0, $rooms - 1)));
             $repeat = fn ($value) => implode(',', array_fill(0, $rooms, $value));
 
@@ -197,15 +215,15 @@ class BookingService
             $zeros = $repeat(0);
             BookedDetails::create([
                 'bookedid' => $booking->bookedid,
-                'booking_type' => '', 'booking_source' => '', 'booking_source_no' => '',
+                'booking_type' => (string) ($extras['booking_type'] ?? ''), 'booking_source' => (string) ($extras['booking_source'] ?? ''), 'booking_source_no' => (string) ($extras['booking_source_no'] ?? ''),
                 'extracheckin' => $repeat($checkin->toDateString()),
                 'extracheckout' => $repeat($checkin->toDateString()),
-                'arival_from' => '', 'purpose' => '',
+                'arival_from' => (string) ($extras['arrival_from'] ?? ''), 'purpose' => (string) ($extras['purpose'] ?? ''),
                 'extra_facility_days' => $zeros, 'extrabed' => $zeros, 'extraperson' => $zeros, 'extrachild' => $zeros,
-                'complementary' => 'no', 'complementaryprice' => $zeros,
-                'discountreason' => '', 'discountamount' => 0,
-                'commissionpersent' => 0, 'commissionamount' => 0,
-                'payment_method' => '', 'advance_amount' => 0, 'advance_remarks' => '', 'remarks' => '',
+                'complementary' => ! empty($extras['complementary']) ? (string) $extras['complementary'] : 'no', 'complementaryprice' => $zeros,
+                'discountreason' => (string) ($extras['discount_reason'] ?? ''), 'discountamount' => $quote['manual_discount'],
+                'commissionpersent' => (float) ($extras['commission_percent'] ?? 0), 'commissionamount' => round($quote['total'] * (float) ($extras['commission_percent'] ?? 0) / 100, 2),
+                'payment_method' => '', 'advance_amount' => 0, 'advance_remarks' => (string) ($extras['advance_remarks'] ?? ''), 'remarks' => (string) ($extras['remarks'] ?? ''),
                 'booked_from' => 1,
             ]);
 

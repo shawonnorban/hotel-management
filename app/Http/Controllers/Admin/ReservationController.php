@@ -90,7 +90,7 @@ class ReservationController extends Controller
             $booking = $this->reservations->create(
                 $guest, $room, $checkin, Carbon::parse($data['checkout']), (int) $data['rooms'], (int) $data['adults'], (int) ($data['children'] ?? 0),
                 $data['guest_name'] ?? null, $data['special'] ?? null, $promo, $data['source'], auth('admin')->id(),
-                isset($data['deposit']) ? (float) $data['deposit'] : null, $method,
+                isset($data['deposit']) ? (float) $data['deposit'] : null, $method, $this->extras($data), array_values(array_filter($data['room_numbers'] ?? [])),
             );
             $this->saveGuests($request, $booking);
         } catch (InvalidArgumentException|RuntimeException $e) {
@@ -162,6 +162,8 @@ class ReservationController extends Controller
             'rooms' => ['required', 'integer', 'min:1', 'max:20'],
             'promo' => ['nullable', 'string', 'max:50'],
             'booking' => ['nullable', 'string', 'max:30'],
+            'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         $room = Roomdetails::findOrFail($d['room']);
@@ -169,10 +171,16 @@ class ReservationController extends Controller
         $out = Carbon::parse($d['checkout']);
         $current = ! empty($d['booking']) ? BookedInfo::where('booking_number', $d['booking'])->value('bookedid') : null;
         $promo = ! empty($d['promo']) ? $this->bookings->findPromo($d['promo'], $room, $in) : null;
-        $quote = $this->bookings->quote($room, $in, $out, (int) $d['rooms'], $promo);
+        $quote = $this->bookings->quote($room, $in, $out, (int) $d['rooms'], $promo, (float) ($d['discount_percent'] ?? 0));
+        $free = $this->bookings->availableRoomNumbers((int) $room->roomid, $in, $out, $current ? (int) $current : null);
 
         return response()->json($quote + [
-            'available' => count($this->bookings->availableRoomNumbers((int) $room->roomid, $in, $out, $current ? (int) $current : null)),
+            'available' => count($free),
+            'room_numbers' => $free,
+            'commission' => round($quote['total'] * (float) ($d['commission_percent'] ?? 0) / 100, 2),
+            'advance_required' => app(\App\Services\AdvanceBookingService::class)->percent() > 0 ? round($quote['total'] * app(\App\Services\AdvanceBookingService::class)->percent() / 100, 2) : 0,
+            'checkin_time' => \App\Support\Settings::row()->checkintime ?? '14:00',
+            'checkout_time' => \App\Support\Settings::row()->checkouttime ?? '12:00',
             'promo_valid' => ! empty($d['promo']) ? (bool) $promo : null,
             'capacity' => (int) $room->capacity * (int) $d['rooms'],
         ]);
@@ -213,7 +221,10 @@ class ReservationController extends Controller
             'details' => ['nullable', 'string', 'max:100'],
         ]);
 
-        return $this->act(fn () => $this->payments->receive($booking, (float) $d['amount'], PaymentMethod::findOrFail($d['method']), auth('admin')->id(), $d['details'] ?? null, $d['reference'] ?? null), 'Payment recorded.', $booking);
+        return $this->act(function () use ($booking, $d) {
+            $this->payments->receive($booking, (float) $d['amount'], PaymentMethod::findOrFail($d['method']), auth('admin')->id(), $d['details'] ?? null, $d['reference'] ?? null);
+            app(\App\Services\AdvanceBookingService::class)->settle($booking, auth('admin')->id());
+        }, 'Payment recorded.', $booking);
     }
 
     public function storeRefund(Request $request, BookedInfo $booking)
@@ -285,6 +296,9 @@ class ReservationController extends Controller
             'guests' => Customerinfo::orderBy('firstname')->get(['customerid', 'firstname', 'lastname', 'cust_phone', 'email']),
             'methods' => PaymentMethod::where('is_active', 1)->orderBy('payment_method_id')->get(),
             'sources' => self::SOURCES,
+            'references' => \App\Models\Bookingtype::orderBy('booktypetitle')->pluck('booktypetitle'),
+            'complementary' => \App\Models\TblComplementary::where('status', 1)->orderBy('complementaryname')->pluck('complementaryname'),
+            'advancePercent' => app(\App\Services\AdvanceBookingService::class)->percent(),
             'prefill' => [],
         ];
     }
@@ -334,6 +348,19 @@ class ReservationController extends Controller
                 'deposit' => ['nullable', 'numeric', 'gt:0'],
                 'deposit_method' => ['nullable', 'required_with:deposit', 'integer', 'exists:payment_method,payment_method_id'],
                 'guests' => ['nullable', 'array', 'max:30'],
+                'room_numbers' => ['nullable', 'array', 'max:20'],
+                'room_numbers.*' => ['string', 'max:20'],
+                'arrival_from' => ['nullable', 'string', 'max:100'],
+                'booking_source' => ['nullable', 'string', 'max:100'],
+                'booking_source_no' => ['nullable', 'string', 'max:100'],
+                'purpose' => ['nullable', 'string', 'max:150'],
+                'remarks' => ['nullable', 'string', 'max:500'],
+                'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+                'discount_reason' => ['nullable', 'required_with:discount_percent', 'string', 'max:150'],
+                'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+                'complementary' => ['nullable', 'array', 'max:30'],
+                'complementary.*' => ['string', 'max:100'],
+                'advance_remarks' => ['nullable', 'string', 'max:255'],
             ] + $this->guestRules('guests.*.');
         }
 
@@ -379,6 +406,32 @@ class ReservationController extends Controller
         $guest->update(['customernumber' => str_pad((string) $guest->customerid, 4, '0', STR_PAD_LEFT)]);
 
         return $guest;
+    }
+
+    /** The legacy "booked details" values staff can fill in on the form. */
+    private function extras(array $d): array
+    {
+        return [
+            'booking_type' => $d['source'] ?? '', 'booking_source' => $d['booking_source'] ?? '', 'booking_source_no' => $d['booking_source_no'] ?? '',
+            'arrival_from' => $d['arrival_from'] ?? '', 'purpose' => $d['purpose'] ?? '', 'remarks' => $d['remarks'] ?? '',
+            'discount_percent' => (float) ($d['discount_percent'] ?? 0), 'discount_reason' => $d['discount_reason'] ?? '',
+            'commission_percent' => (float) ($d['commission_percent'] ?? 0), 'complementary' => implode(', ', $d['complementary'] ?? []),
+            'advance_remarks' => $d['advance_remarks'] ?? '',
+        ];
+    }
+
+    /** Old-customer search for the booking form (by mobile, name or email). */
+    public function customers(Request $request)
+    {
+        $term = trim((string) $request->query('q', ''));
+        if (mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        return response()->json(Customerinfo::where(fn ($q) => $q->where('cust_phone', 'like', $like)->orWhere('firstname', 'like', $like)->orWhere('lastname', 'like', $like)->orWhere('email', 'like', $like))
+            ->orderBy('firstname')->limit(15)->get(['customerid', 'title', 'firstname', 'lastname', 'cust_phone', 'email'])
+            ->map(fn ($c) => ['id' => $c->customerid, 'name' => trim($c->firstname.' '.$c->lastname), 'phone' => $c->cust_phone, 'email' => $c->email])->values());
     }
 
     /** @return array<string,list<string>> */

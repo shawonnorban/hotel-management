@@ -41,13 +41,18 @@ class ReservationService
         ?int $userId,
         ?float $deposit = null,
         ?PaymentMethod $method = null,
+        array $extras = [],
+        array $wantedRooms = [],
     ): BookedInfo {
-        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, $source, $userId, $deposit, $method) {
-            $booking = $this->bookings->createBooking($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, '2', $source);
-            $this->log->add($booking, 'created', 'Created by staff ('.$source.') and confirmed', $userId);
+        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, $source, $userId, $deposit, $method, $extras, $wantedRooms) {
+            $advance = app(AdvanceBookingService::class);
+            // With an advance rule the booking stays pending until enough has been paid.
+            $booking = $this->bookings->createBooking($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, $advance->percent() > 0 ? '0' : '2', $source, $extras, $wantedRooms);
+            $this->log->add($booking, 'created', 'Created by staff ('.$source.')'.($advance->percent() > 0 ? ', awaiting advance' : ' and confirmed'), $userId);
 
             if ($deposit && $deposit > 0) {
-                $this->payments->receive($booking, $deposit, $method ?? throw new InvalidArgumentException('Choose a payment method for the deposit.'), $userId, 'Deposit at booking');
+                $this->payments->receive($booking, $deposit, $method ?? throw new InvalidArgumentException('Choose a payment method for the deposit.'), $userId, 'Advance at booking');
+                $advance->settle($booking, $userId);
             }
 
             return $booking->fresh();

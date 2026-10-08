@@ -86,6 +86,65 @@ class ReservationTest extends HotelTestCase
         $this->assertCount(0, $booking->fresh()->guests);
     }
 
+    public function test_form_extras_manual_discount_commission_and_chosen_rooms_are_stored(): void
+    {
+        $this->get('/admin/reservations/create')->assertOk()->assertSee('Reservation Details')->assertSee('Customer Info')->assertSee('Advance Details')->assertSee('Billing Details');
+
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), [
+            'room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2, 'source' => 'agent', 'guest_id' => $this->guest->customerid,
+            'room_numbers' => ['102'], 'arrival_from' => 'Dhaka', 'booking_source' => 'Agoda', 'booking_source_no' => 'AG-77', 'purpose' => 'Business', 'remarks' => 'Late arrival',
+            'discount_percent' => 10, 'discount_reason' => 'Loyal guest', 'commission_percent' => 5, 'complementary' => ['Breakfast', 'WiFi'], 'advance_remarks' => 'Cash on arrival',
+        ]))->assertSessionHasNoErrors();
+
+        $b = BookedInfo::firstOrFail();
+        $this->assertSame('102', $b->room_no);
+        $d = \App\Models\BookedDetails::firstOrFail();
+        $this->assertSame(['Agoda', 'AG-77', 'Dhaka', 'Business', 'Late arrival', 'Loyal guest', 'Breakfast, WiFi'], [$d->booking_source, $d->booking_source_no, $d->arival_from, $d->purpose, $d->remarks, $d->discountreason, $d->complementary]);
+        // 2 nights × 100 = 200, −10% = 180, +5% tax +10% service = 207.00; commission 5% of the total.
+        $this->assertSame('207.00', $b->total_price);
+        $this->assertSame('20.00', (string) number_format($d->discountamount, 2, '.', ''));
+        $this->assertSame('10.35', (string) number_format($d->commissionamount, 2, '.', ''));
+
+        // Discount needs a reason; a taken room can't be chosen again.
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), ['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 1, 'source' => 'phone', 'guest_id' => $this->guest->customerid, 'discount_percent' => 5]))->assertSessionHasErrors('discount_reason');
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), ['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 1, 'source' => 'phone', 'guest_id' => $this->guest->customerid, 'room_numbers' => ['102']]))->assertSessionHasErrors('booking');
+        $this->assertSame(1, BookedInfo::count());
+    }
+
+    public function test_old_customer_search_and_quote_with_discount(): void
+    {
+        $this->get('/admin/reservations/customers?q=0170')->assertOk()->assertJsonFragment(['phone' => '0170000001']);
+        $this->get('/admin/reservations/customers?q=x')->assertOk()->assertExactJson([]);
+        $this->get('/admin/reservations/quote?'.http_build_query($this->stay(0, 2) + ['room' => $this->room->roomid, 'rooms' => 1, 'discount_percent' => 10, 'commission_percent' => 10]))
+            ->assertOk()->assertJsonFragment(['manual_discount' => 20.0, 'total' => 207.0, 'commission' => 20.7])->assertJsonPath('room_numbers', ['101', '102']);
+    }
+
+    public function test_advance_rule_keeps_bookings_pending_until_enough_is_paid(): void
+    {
+        $this->put('/admin/advance-bookings/rule', ['percent' => 50, 'hold_days' => 2])->assertSessionHasNoErrors();
+        \App\Support\AppSettings::flush();
+
+        // 230 total → 115 advance needed. 100 is not enough.
+        $this->post('/admin/reservations', array_merge($this->stay(5, 2), ['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2, 'source' => 'phone', 'guest_id' => $this->guest->customerid, 'deposit' => 100, 'deposit_method' => $this->cash()->payment_method_id]))->assertSessionHasNoErrors();
+        $b = BookedInfo::firstOrFail();
+        $this->assertSame('0', (string) $b->bookingstatus);
+
+        $this->get('/admin/advance-bookings?due=1')->assertOk()->assertSee('#'.$b->booking_number)->assertSee('Receive advance');
+        $this->post("/admin/advance-bookings/{$b->booking_number}/advance", ['amount' => 15, 'method' => $this->cash()->payment_method_id])->assertSessionHasNoErrors();
+        $this->assertSame('2', (string) $b->fresh()->bookingstatus);
+
+        // An unpaid pending booking is released after the hold period; one holding money never is.
+        $this->post('/admin/reservations', array_merge($this->stay(8, 1), ['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 1, 'source' => 'phone', 'guest_id' => $this->guest->customerid]))->assertSessionHasNoErrors();
+        $unpaid = BookedInfo::orderByDesc('bookedid')->first();
+        $this->assertSame('0', (string) $unpaid->bookingstatus);
+        $this->artisan('hotel:release-unpaid-bookings')->assertSuccessful();
+        $this->assertSame('0', (string) $unpaid->fresh()->bookingstatus); // still within the hold period
+        $unpaid->update(['date_time' => now()->subDays(3)]);
+        $this->artisan('hotel:release-unpaid-bookings')->assertSuccessful();
+        $this->assertSame('1', (string) $unpaid->fresh()->bookingstatus);
+        $this->assertSame('2', (string) $b->fresh()->bookingstatus);
+    }
+
     public function test_new_guest_needs_contact_details_and_unique_phone(): void
     {
         $this->post('/admin/reservations', array_merge($this->stay(0, 2), ['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2, 'source' => 'phone']))->assertSessionHasErrors(['new_firstname', 'new_phone']);

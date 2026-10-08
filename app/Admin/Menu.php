@@ -14,6 +14,7 @@ class Menu
     private const SCREENS = [
         ['Dashboard', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
         ['Front desk', 'Reservations', 'bi-calendar-check', 'admin.reservations.index', 'reservations.view'],
+        ['Front desk', 'Advance bookings', 'bi-calendar-plus', 'admin.advance.index', 'reservations.view'],
         ['WhatsApp', 'WhatsApp setting', 'bi-whatsapp', 'admin.whatsapp.settings', 'settings.manage'],
         ['WhatsApp', 'Messages', 'bi-chat-dots', 'admin.whatsapp.messages', 'settings.manage'],
         ['Administration', 'Backups', 'bi-database', 'admin.backups.index', 'backup.manage'],

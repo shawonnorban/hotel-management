@@ -98,11 +98,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/settings/payment-gateways/{driver}', [Admin\PaymentGatewayController::class, 'update'])->where('driver', 'stripe|paypal|sslcommerz')->name('gateways.update');
         });
 
+        Route::middleware('can:reservations.view')->group(function () {
+            Route::get('/advance-bookings', [Admin\AdvanceBookingController::class, 'index'])->name('advance.index');
+        });
+        Route::put('/advance-bookings/rule', [Admin\AdvanceBookingController::class, 'updateRule'])->middleware('can:settings.manage')->name('advance.rule');
+        Route::post('/advance-bookings/{booking}/advance', [Admin\AdvanceBookingController::class, 'receive'])->middleware('can:reservations.payments')->name('advance.receive');
+
         Route::prefix('reservations')->name('reservations.')->controller(Admin\ReservationController::class)->group(function () {
             Route::middleware('can:reservations.create')->group(function () {
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
                 Route::get('/quote', 'quote')->name('quote');
+                Route::get('/customers', 'customers')->name('customers');
             });
             Route::middleware('can:reservations.view')->group(function () {
                 Route::get('/', 'index')->name('index');
