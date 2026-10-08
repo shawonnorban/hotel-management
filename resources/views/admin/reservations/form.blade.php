@@ -4,11 +4,18 @@
 @php
     $editing = (bool) $booking;
     $map = $editing ? [
-        'room' => (int) explode(',', $booking->roomid)[0], 'checkin' => $booking->checkindate->format('Y-m-d'), 'checkout' => $booking->checkoutdate->format('Y-m-d'),
-        'rooms' => $booking->total_room, 'adults' => array_sum(explode(',', $booking->nuofpeople)), 'children' => array_sum(explode(',', (string) $booking->children)),
+        'checkin' => $booking->checkindate->format('Y-m-d'), 'checkout' => $booking->checkoutdate->format('Y-m-d'),
         'guest_name' => $booking->full_guest_name, 'special' => $booking->special_request, 'promo' => $booking->promocode,
     ] : [];
     $val = fn ($key, $default = null) => old($key, $editing ? ($map[$key] ?? $default) : ($prefill[$key] ?? $default));
+    // One row per room type: from the failed submission, the booking being edited, a prefilled room, or an empty first row.
+    if (old('lines')) {
+        $lineRows = array_values(old('lines'));
+    } elseif ($editing) {
+        $lineRows = array_map(fn ($l) => ['room' => $l['room_id'], 'rooms' => $l['rooms'], 'adults' => $l['adults'], 'children' => $l['children'], 'numbers' => $l['numbers']], $booking->roomLines());
+    } else {
+        $lineRows = [['room' => $prefill['room'] ?? '', 'rooms' => 1, 'adults' => 2, 'children' => 0, 'numbers' => []]];
+    }
 @endphp
 <a href="{{ $editing ? route('admin.reservations.show', $booking->booking_number) : route('admin.reservations.index') }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> {{ $editing ? '#'.$booking->booking_number : 'Reservations' }}</a>
 <h1 class="page-title mt-1 mb-4">{{ $editing ? 'Edit reservation #'.$booking->booking_number : 'New reservation' }}</h1>
@@ -31,17 +38,18 @@
     @endunless
 
     <div class="card mb-4"><div class="card-header fw-semibold">{{ $editing ? 'Stay' : 'Room Details' }}</div><div class="card-body">
-        <div class="border rounded mb-3"><div class="px-3 py-2 border-bottom small fw-semibold">Room Info</div><div class="p-3 row g-3">
-            <div class="col-md-4"><label class="form-label small fw-semibold">Room Type <span class="text-danger">*</span></label>
-                <select name="room" id="room" class="form-select" required><option value="">Choose Room Type</option>@foreach ($rooms as $r)<option value="{{ $r->roomid }}" @selected((string) $val('room') === (string) $r->roomid)>{{ $r->roomtype }} · {{ \App\Support\Money::format($r->rate) }} · sleeps {{ $r->capacity }}</option>@endforeach</select></div>
-            <div class="col-md-2"><label class="form-label small fw-semibold">Rooms</label><input type="number" name="rooms" id="rooms" min="1" max="20" class="form-control" value="{{ $val('rooms', 1) }}" required></div>
-            <div class="col-md-2"><label class="form-label small fw-semibold">#Adults</label><input type="number" name="adults" min="1" class="form-control" value="{{ $val('adults', 2) }}" required></div>
-            <div class="col-md-2"><label class="form-label small fw-semibold">#Children</label><input type="number" name="children" min="0" class="form-control" value="{{ $val('children', 0) }}"></div>
-            <div class="col-md-2"><label class="form-label small fw-semibold">Promo code</label><input name="promo" id="promo" class="form-control text-uppercase" value="{{ $val('promo') }}"></div>
-            @unless ($editing)<div class="col-12"><label class="form-label small fw-semibold">Room No. <span class="text-body-secondary fw-normal">(optional — tick the rooms you want, otherwise they are picked for you)</span></label><div id="roomNumbers" class="d-flex flex-wrap gap-2"><span class="small text-body-secondary">Choose a room type and dates to see the free rooms.</span></div></div>@endunless
-            <div class="col-md-6"><label class="form-label small fw-semibold">Guest name on the booking</label><input name="guest_name" class="form-control" value="{{ $val('guest_name') }}"></div>
-            <div class="col-md-6"><label class="form-label small fw-semibold">Special requests</label><input name="special" class="form-control" value="{{ $val('special') }}"></div>
-            <div class="col-12"><div id="availability" class="small"></div></div>
+        <div id="roomRows">
+            @foreach ($lineRows as $i => $row)
+                @include('admin.reservations._room_row', ['i' => $i, 'row' => $row, 'rooms' => $rooms])
+            @endforeach
+        </div>
+        <template id="roomTpl">@include('admin.reservations._room_row', ['i' => '__i__', 'row' => ['room' => '', 'rooms' => 1, 'adults' => 2, 'children' => 0, 'numbers' => []], 'rooms' => $rooms])</template>
+        <div class="mb-3"><button type="button" class="btn btn-outline-primary btn-sm" id="addRoom"><i class="bi bi-plus-lg me-1"></i>Add another room type</button> <span class="small text-body-secondary ms-2">A guest can book several room types in one reservation.</span></div>
+        <div class="border rounded mb-3"><div class="p-3 row g-3">
+            <div class="col-md-3"><label class="form-label small fw-semibold">Promo code</label><input name="promo" id="promo" class="form-control text-uppercase" value="{{ $val('promo') }}"></div>
+            <div class="col-md-4"><label class="form-label small fw-semibold">Guest name on the booking</label><input name="guest_name" class="form-control" value="{{ $val('guest_name') }}"></div>
+            <div class="col-md-5"><label class="form-label small fw-semibold">Special requests</label><input name="special" class="form-control" value="{{ $val('special') }}"></div>
+            @error('booking')<div class="col-12 text-danger small">{{ $message }}</div>@enderror
         </div></div>
 
         <div class="row g-3">
@@ -125,7 +133,7 @@
 <script>
 (function () {
     function $(id) { return document.getElementById(id); }
-    function money(v) { return Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    var money = window.fmtMoney;
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
     // Additional guests
@@ -135,38 +143,97 @@
         rows.addEventListener('click', function (e) { var b = e.target.closest('.rm-guest'); if (b) b.closest('.guest-row').remove(); });
     }
 
-    // Price, availability and room numbers
-    var box = $('quoteBox'), timer, lastQuote = null;
-    var fields = ['room', 'checkin', 'checkout', 'rooms', 'promo', 'discount_percent', 'commission_percent'].filter(function (f) { return $(f); });
+    // Room rows ------------------------------------------------------------
+    var roomRows = $('roomRows'), roomTpl = $('roomTpl'), rowSeq = roomRows.querySelectorAll('.room-row').length + 100;
+    var timer, box = $('quoteBox');
+    var base = ['checkin', 'checkout', 'promo', 'discount_percent', 'commission_percent'].filter(function (f) { return $(f); });
+    function rowEls() { return Array.prototype.slice.call(roomRows.querySelectorAll('.room-row')); }
+    function ticked(row) { return Array.prototype.slice.call(row.querySelectorAll('.room-numbers input:checked')); }
+    function syncTypeOptions() {
+        var used = rowEls().map(function (r) { return r.querySelector('.room-type').value; }).filter(Boolean);
+        rowEls().forEach(function (r) {
+            var mine = r.querySelector('.room-type').value;
+            Array.prototype.forEach.call(r.querySelectorAll('.room-type option'), function (o) { o.disabled = o.value !== '' && o.value !== mine && used.indexOf(o.value) >= 0; });
+        });
+        $('addRoom').disabled = used.length >= roomRows.querySelector('.room-type').options.length - 1 && rowEls().every(function (r) { return r.querySelector('.room-type').value; });
+    }
+    function query() {
+        var q = new URLSearchParams(), n = 0;
+        base.forEach(function (f) { q.set(f, $(f).value); });
+        rowEls().forEach(function (r) {
+            var type = r.querySelector('.room-type').value; if (!type) { return; }
+            q.set('lines[' + n + '][room]', type);
+            q.set('lines[' + n + '][rooms]', r.querySelector('.room-count').value || 1);
+            q.set('lines[' + n + '][adults]', r.querySelector('.room-adults').value || 1);
+            q.set('lines[' + n + '][children]', r.querySelector('.room-children').value || 0);
+            ticked(r).forEach(function (c, k) { q.set('lines[' + n + '][numbers][' + k + ']', c.value); });
+            n++;
+        });
+        @if ($editing) q.set('booking', @json($booking->booking_number)); @endif
+        return n ? q : null;
+    }
+    function renderNumbers(row, info) {
+        var box2 = row.querySelector('.room-numbers'), keep = ticked(row).map(function (c) { return c.value; });
+        var idx = row.dataset.i;
+        box2.innerHTML = info.numbers.length ? info.numbers.map(function (n) { return '<label class="btn btn-sm btn-outline-secondary mb-0"><input type="checkbox" class="form-check-input me-1" name="lines[' + idx + '][numbers][]" value="' + esc(n) + '"' + (keep.indexOf(String(n)) >= 0 ? ' checked' : '') + '>' + esc(n) + '</label>'; }).join('') : '<span class="small text-danger">No free rooms of this type for those dates.</span>';
+        var count = parseInt(row.querySelector('.room-count').value || 1, 10), av = row.querySelector('.room-avail'), party = parseInt(row.querySelector('.room-adults').value || 0, 10) + parseInt(row.querySelector('.room-children').value || 0, 10);
+        var msgs = [];
+        msgs.push(info.available >= count ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + info.available + ' room(s) free</span>' : '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Only ' + info.available + ' room(s) free, you asked for ' + count + '</span>');
+        if (party > info.capacity) { msgs.push('<span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>' + party + ' guests do not fit ' + count + ' room(s) (max ' + info.capacity + ')</span>'); }
+        av.innerHTML = msgs.join(' · ');
+    }
     function refresh() {
-        var q = {}; fields.forEach(function (f) { q[f] = $(f).value; });
-        if (!q.room || !q.checkin || !q.checkout || q.checkout <= q.checkin) { return; }
-        @if ($editing) q.booking = @json($booking->booking_number); @endif
-        fetch(@json(route('admin.reservations.quote')) + '?' + new URLSearchParams(q), { headers: { 'Accept': 'application/json' } })
+        var q = query();
+        if (!q || !$('checkin').value || !$('checkout').value || $('checkout').value <= $('checkin').value) { box.innerHTML = '<div class="text-body-secondary small">Choose a room type and dates to see the price and availability.</div>'; return; }
+        fetch(@json(route('admin.reservations.quote')) + '?' + q.toString(), { headers: { 'Accept': 'application/json' } })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
             .then(function (d) {
-                lastQuote = d;
-                var h = '<table class="table table-sm mb-0"><tr><td>Booking Charge<div class="small text-body-secondary">' + money(d.rate) + ' × ' + d.nights + ' night(s) × ' + d.rooms + ' room(s)</div></td><td class="text-end">' + money(d.subtotal) + '</td></tr>';
+                var h = '<table class="table table-sm mb-0">';
+                d.lines.forEach(function (l) { h += '<tr><td>' + esc(l.room) + '<div class="small text-body-secondary">' + money(l.rate) + ' × ' + l.nights + ' night(s) × ' + l.rooms + ' room(s)</div></td><td class="text-end">' + money(l.subtotal) + '</td></tr>'; });
+                if (d.lines.length > 1) { h += '<tr class="fw-semibold"><td>Booking Charge</td><td class="text-end">' + money(d.subtotal) + '</td></tr>'; }
                 if (d.discount > 0) { h += '<tr class="text-success"><td>Discount</td><td class="text-end">−' + money(d.discount) + '</td></tr>'; }
-                h += '<tr><td>Tax</td><td class="text-end">' + money(d.tax) + '</td></tr><tr><td>Service Charge</td><td class="text-end">' + money(d.service) + '</td></tr><tr class="fw-bold"><td>Total</td><td class="text-end">' + money(d.total) + '</td></tr></table>';
-                if (d.promo_valid === false) { h += '<div class="small text-danger mt-2">Promo code not valid.</div>'; }
+                h += '<tr><td>Tax <span class="small text-body-secondary">(' + d.tax_rate + '%)</span></td><td class="text-end">' + money(d.tax) + '</td></tr><tr><td>Service Charge <span class="small text-body-secondary">(' + d.service_rate + '%)</span></td><td class="text-end">' + money(d.service) + '</td></tr><tr class="fw-bold"><td>Total</td><td class="text-end">' + money(d.total) + '</td></tr></table>';
+                if (d.promo_valid === false) { h += '<div class="small text-danger mt-2">Promo code not valid for these rooms.</div>'; }
                 if (d.promo_valid === true) { h += '<div class="small text-success mt-2">Promo code applied (' + d.promo + '%).</div>'; }
                 box.innerHTML = h;
-                var av = $('availability');
-                if (av) { av.innerHTML = d.available >= d.rooms ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + d.available + ' room(s) available</span>' : '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Only ' + d.available + ' room(s) available</span>'; }
-                if ($('rentIn')) { $('rentIn').value = q.checkin + ' ' + d.checkin_time.slice(0, 5); $('rentOut').value = q.checkout + ' ' + String(d.checkout_time).slice(0, 5); $('rentAmt').value = money(d.subtotal); }
+                rowEls().forEach(function (r) { var info = d.types[r.querySelector('.room-type').value]; if (info) { renderNumbers(r, info); } });
+                if ($('rentIn')) { $('rentIn').value = $('checkin').value + ' ' + String(d.checkin_time).slice(0, 5); $('rentOut').value = $('checkout').value + ' ' + String(d.checkout_time).slice(0, 5); $('rentAmt').value = money(d.subtotal); }
                 if ($('inTime')) { $('inTime').textContent = 'from ' + String(d.checkin_time).slice(0, 5); $('outTime').textContent = 'until ' + String(d.checkout_time).slice(0, 5); }
                 if ($('discountAmt')) { $('discountAmt').value = money(d.manual_discount); $('commissionAmt').value = money(d.commission); }
                 if ($('advanceHint') && d.advance_required > 0) { $('advanceHint').innerHTML = 'Required advance: <strong>' + money(d.advance_required) + '</strong> <button type="button" class="btn btn-sm btn-link p-0 ms-1" id="useAdv">use it</button>'; var u = $('useAdv'); if (u) { u.onclick = function () { $('deposit').value = d.advance_required.toFixed(2); }; } }
-                var rn = $('roomNumbers');
-                if (rn) {
-                    var picked = Array.prototype.slice.call(rn.querySelectorAll('input:checked')).map(function (i) { return i.value; });
-                    rn.innerHTML = d.room_numbers.length ? d.room_numbers.map(function (n) { return '<label class="btn btn-sm btn-outline-secondary mb-0"><input type="checkbox" class="form-check-input me-1" name="room_numbers[]" value="' + esc(n) + '"' + (picked.indexOf(String(n)) >= 0 ? ' checked' : '') + '>' + esc(n) + '</label>'; }).join('') : '<span class="small text-danger">No free rooms of this type for those dates.</span>';
-                }
             }).catch(function () { box.innerHTML = '<div class="small text-danger">Could not load the price.</div>'; });
     }
     function schedule() { clearTimeout(timer); timer = setTimeout(refresh, 250); }
-    fields.forEach(function (f) { $(f).addEventListener('input', schedule); $(f).addEventListener('change', schedule); });
+    function onRowChange(e) {
+        var row = e.target.closest('.room-row'); if (!row) { return; }
+        var count = row.querySelector('.room-count');
+        if (e.target.matches('.room-numbers input')) {
+            // Ticking rooms sets how many rooms are booked; unticked rooms are simply picked for you.
+            var n = ticked(row).length; if (n > parseInt(count.value || 0, 10)) { count.value = n; }
+        } else if (e.target.matches('.room-count')) {
+            var picks = ticked(row), want = parseInt(count.value || 1, 10);
+            while (picks.length > want) { picks.pop().checked = false; }
+        } else if (e.target.matches('.room-type')) {
+            row.querySelector('.room-numbers').innerHTML = ''; row.querySelector('.room-avail').innerHTML = '';
+            var opt = e.target.selectedOptions[0]; if (opt && opt.dataset.cap) { row.querySelector('.room-adults').max = opt.dataset.cap * 10; }
+            syncTypeOptions();
+        }
+        schedule();
+    }
+    roomRows.addEventListener('input', onRowChange); roomRows.addEventListener('change', onRowChange);
+    roomRows.addEventListener('click', function (e) {
+        var b = e.target.closest('.rm-room'); if (!b) { return; }
+        if (rowEls().length > 1) { b.closest('.room-row').remove(); syncTypeOptions(); schedule(); } else { alert('A reservation needs at least one room.'); }
+    });
+    $('addRoom').addEventListener('click', function () {
+        roomRows.insertAdjacentHTML('beforeend', roomTpl.innerHTML.replace(/__i__/g, rowSeq++));
+        var rows = rowEls(), last = rows[rows.length - 1], sel = last.querySelector('.room-type');
+        syncTypeOptions();
+        var free = Array.prototype.find.call(sel.options, function (o) { return o.value && !o.disabled; });
+        if (free) { sel.value = free.value; }
+        syncTypeOptions(); schedule();
+    });
+    base.forEach(function (f) { $(f).addEventListener('input', schedule); $(f).addEventListener('change', schedule); });
 
     // Customers: one main guest, either new (modal fields) or an existing record
     var custRows = $('custRows'), gid = $('guest_id');
@@ -222,7 +289,7 @@
             };
             ci._flatpickr.config.onChange.push(sync); sync();
         }
-        refresh();
+        syncTypeOptions(); refresh();
     });
 })();
 </script>

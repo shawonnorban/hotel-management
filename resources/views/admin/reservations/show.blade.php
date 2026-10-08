@@ -26,8 +26,8 @@
                 <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Check-out</div><div class="fw-semibold">{{ $booking->checkoutdate->format('D, d M Y') }}</div></div>
                 <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Nights</div><div class="fw-semibold">{{ $booking->nights }}</div></div>
                 <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Source</div><div class="fw-semibold text-capitalize">{{ $booking->source ?: 'website' }}</div></div>
-                <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Room type</div><div class="fw-semibold">{{ $roomType?->roomtype ?? '—' }}</div></div>
-                <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Rooms</div><div class="fw-semibold">{{ $booking->total_room }} · No. {{ $booking->room_no }}</div></div>
+                <div class="col-sm-12 col-md-6"><div class="small text-body-secondary">Rooms</div>
+                    @foreach ($booking->roomLines() as $rl)<div class="fw-semibold">{{ $roomNames[$rl['room_id']] ?? '—' }} <span class="fw-normal text-body-secondary">× {{ $rl['rooms'] }} · No. {{ implode(', ', $rl['numbers']) }}</span></div>@endforeach</div>
                 <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Guests</div><div class="fw-semibold">{{ array_sum(explode(',', $booking->nuofpeople)) }} adult(s), {{ array_sum(explode(',', (string) $booking->children)) }} child(ren)</div></div>
                 <div class="col-sm-6 col-md-3"><div class="small text-body-secondary">Booked on</div><div class="fw-semibold">{{ $booking->date_time->format('d M Y H:i') }}</div></div>
             </div>

@@ -44,10 +44,35 @@ class ReservationService
         array $extras = [],
         array $wantedRooms = [],
     ): BookedInfo {
-        return DB::transaction(function () use ($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, $source, $userId, $deposit, $method, $extras, $wantedRooms) {
+        return $this->createLines(
+            $guest, [['room' => $room, 'rooms' => $rooms, 'adults' => $adults, 'children' => $children, 'numbers' => $wantedRooms]],
+            $checkin, $checkout, $guestName, $special, $promo, $source, $userId, $deposit, $method, $extras,
+        );
+    }
+
+    /**
+     * Staff booking for one or more room types.
+     *
+     * @param  list<array{room:Roomdetails,rooms:int,adults?:int,children?:int,numbers?:list<string>}>  $lines
+     */
+    public function createLines(
+        Customerinfo $guest,
+        array $lines,
+        Carbon $checkin,
+        Carbon $checkout,
+        ?string $guestName,
+        ?string $special,
+        ?Promocode $promo,
+        string $source,
+        ?int $userId,
+        ?float $deposit = null,
+        ?PaymentMethod $method = null,
+        array $extras = [],
+    ): BookedInfo {
+        return DB::transaction(function () use ($guest, $lines, $checkin, $checkout, $guestName, $special, $promo, $source, $userId, $deposit, $method, $extras) {
             $advance = app(AdvanceBookingService::class);
             // With an advance rule the booking stays pending until enough has been paid.
-            $booking = $this->bookings->createBooking($guest, $room, $checkin, $checkout, $rooms, $adults, $children, $guestName, $special, $promo, $advance->percent() > 0 ? '0' : '2', $source, $extras, $wantedRooms);
+            $booking = $this->bookings->createBookingLines($guest, $lines, $checkin, $checkout, $guestName, $special, $promo, $advance->percent() > 0 ? '0' : '2', $source, $extras);
             $this->log->add($booking, 'created', 'Created by staff ('.$source.')'.($advance->percent() > 0 ? ', awaiting advance' : ' and confirmed'), $userId);
 
             if ($deposit && $deposit > 0) {
@@ -61,8 +86,13 @@ class ReservationService
 
     public function modify(BookedInfo $booking, Roomdetails $room, Carbon $checkin, Carbon $checkout, int $rooms, int $adults, int $children, ?Promocode $promo, ?int $userId): BookedInfo
     {
-        $updated = $this->bookings->modify($booking, $room, $checkin, $checkout, $rooms, $adults, $children, $promo);
-        $this->log->add($updated, 'modified', $checkin->format('d M').' → '.$checkout->format('d M Y').', '.$rooms.' room(s), rooms '.$updated->room_no, $userId);
+        return $this->modifyLines($booking, [['room' => $room, 'rooms' => $rooms, 'adults' => $adults, 'children' => $children]], $checkin, $checkout, $promo, $userId);
+    }
+
+    public function modifyLines(BookedInfo $booking, array $lines, Carbon $checkin, Carbon $checkout, ?Promocode $promo, ?int $userId): BookedInfo
+    {
+        $updated = $this->bookings->modifyLines($booking, $lines, $checkin, $checkout, $promo);
+        $this->log->add($updated, 'modified', $checkin->format('d M').' → '.$checkout->format('d M Y').', '.$updated->total_room.' room(s), rooms '.$updated->room_no, $userId);
 
         return $updated;
     }

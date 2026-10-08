@@ -108,6 +108,34 @@ class BookedInfo extends Model
         return self::STATUS_LABELS[(string) $this->bookingstatus] ?? 'Unknown';
     }
 
+    /**
+     * The booking's rooms grouped by room type, rebuilt from the per-room lists the table stores.
+     *
+     * @return list<array{room_id:int,rooms:int,adults:int,children:int,numbers:list<string>,rate:float}>
+     */
+    public function roomLines(): array
+    {
+        $ids = array_values(array_filter(explode(',', (string) $this->roomid), fn ($v) => $v !== ''));
+        $numbers = array_map('trim', explode(',', (string) $this->room_no));
+        $adults = explode(',', (string) $this->nuofpeople);
+        $children = explode(',', (string) $this->children);
+        $rates = explode(',', (string) $this->roomrate);
+
+        $lines = [];
+        foreach ($ids as $i => $id) {
+            $id = (int) $id;
+            $lines[$id] ??= ['room_id' => $id, 'rooms' => 0, 'adults' => 0, 'children' => 0, 'numbers' => [], 'rate' => (float) ($rates[$i] ?? 0)];
+            $lines[$id]['rooms']++;
+            $lines[$id]['adults'] += (int) ($adults[$i] ?? 0);
+            $lines[$id]['children'] += (int) ($children[$i] ?? 0);
+            if (($numbers[$i] ?? '') !== '') {
+                $lines[$id]['numbers'][] = $numbers[$i];
+            }
+        }
+
+        return array_values($lines);
+    }
+
     public function getNightsAttribute(): int
     {
         return max(1, (int) $this->checkindate->copy()->startOfDay()->diffInDays($this->checkoutdate->copy()->startOfDay()));

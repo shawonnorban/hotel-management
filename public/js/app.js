@@ -71,6 +71,46 @@
         });
     });
 
+
+    // Money in the hotel's currency (set by the layout): symbol, position and Indian-style grouping for Taka.
+    window.fmtMoney = function (v) {
+        var c = window.HOTEL_MONEY || {}, n = Number(v) || 0;
+        var txt = Math.abs(n).toLocaleString(c.indian ? 'en-IN' : 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        txt = (n < 0 ? '-' : '') + txt;
+        if (!c.symbol) { return txt; }
+        return c.position === 2 ? txt + c.symbol : c.symbol + txt;
+    };
+
+    // Image viewer: any uploaded picture (thumbnail or link to an image) opens in a modal instead of a new tab.
+    (function () {
+        var modalEl = null, imgEl = null, capEl = null, modal = null;
+        function build() {
+            modalEl = document.createElement('div');
+            modalEl.className = 'modal fade'; modalEl.tabIndex = -1;
+            modalEl.innerHTML = '<div class="modal-dialog modal-dialog-centered modal-xl"><div class="modal-content bg-transparent border-0"><div class="modal-body p-0 text-center position-relative">' +
+                '<button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2 bg-dark bg-opacity-50 p-2 rounded" data-bs-dismiss="modal" aria-label="Close"></button>' +
+                '<img class="img-fluid rounded" style="max-height:85vh" alt=""><div class="text-white small mt-2"></div></div></div></div>';
+            document.body.appendChild(modalEl);
+            imgEl = modalEl.querySelector('img'); capEl = modalEl.querySelector('.text-white');
+            modal = new bootstrap.Modal(modalEl);
+        }
+        function show(src, caption) {
+            if (!window.bootstrap) { window.open(src, '_blank'); return; }
+            if (!modalEl) { build(); }
+            imgEl.src = src; capEl.textContent = caption || ''; modal.show();
+        }
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a[href]'), img = e.target.closest('img');
+            var isImg = /\.(jpe?g|png|gif|webp|svg)(\?|#|$)/i;
+            if (a && isImg.test(a.getAttribute('href') || '') && !a.hasAttribute('download')) {
+                e.preventDefault(); show(a.href, (a.querySelector('img') && a.querySelector('img').alt) || a.textContent.trim()); return;
+            }
+            if (img && !a && img.closest('.page, .zoomable') && !img.classList.contains('no-zoom')) {
+                e.preventDefault(); show(img.currentSrc || img.src, img.alt);
+            }
+        });
+    })();
+
     // Enhanced widgets ------------------------------------------------------
     window.addEventListener('DOMContentLoaded', function () {
         if (window.flatpickr) {

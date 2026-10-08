@@ -17,7 +17,8 @@ class BaseDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $usd = Currency::firstOrCreate(['currencyname' => 'USD'], ['curr_icon' => '$', 'position' => 1, 'curr_rate' => 1]);
+        Currency::firstOrCreate(['currencyname' => 'USD'], ['curr_icon' => '$', 'position' => 1, 'curr_rate' => 0.0091]);
+        $bdt = Currency::firstOrCreate(['currencyname' => 'BDT'], ['curr_icon' => '৳', 'position' => 1, 'curr_rate' => 1]);
 
         if (! Setting::find(Settings::ROW_ID)) {
             Setting::create([
@@ -26,7 +27,7 @@ class BaseDataSeeder extends Seeder
                 'storename' => config('app.name'),
                 'servicecharge' => 0,
                 'vat' => 0,
-                'currency' => $usd->currencyid,
+                'currency' => $bdt->currencyid,
                 'splash_logo' => '',
                 'timezone' => config('app.timezone'),
                 'checkintime' => '14:00',

@@ -82,15 +82,14 @@ class ReservationController extends Controller
 
         try {
             $guest = $this->resolveGuest($data);
-            $room = Roomdetails::findOrFail($data['room']);
+            $lines = $this->linesFromData($data);
             $checkin = Carbon::parse($data['checkin']);
-            $promo = $this->promo($data, $room, $checkin);
+            $promo = $this->promo($data, $lines, $checkin);
             $method = ! empty($data['deposit_method']) ? PaymentMethod::find($data['deposit_method']) : null;
 
-            $booking = $this->reservations->create(
-                $guest, $room, $checkin, Carbon::parse($data['checkout']), (int) $data['rooms'], (int) $data['adults'], (int) ($data['children'] ?? 0),
-                $data['guest_name'] ?? null, $data['special'] ?? null, $promo, $data['source'], auth('admin')->id(),
-                isset($data['deposit']) ? (float) $data['deposit'] : null, $method, $this->extras($data), array_values(array_filter($data['room_numbers'] ?? [])),
+            $booking = $this->reservations->createLines(
+                $guest, $lines, $checkin, Carbon::parse($data['checkout']), $data['guest_name'] ?? null, $data['special'] ?? null, $promo, $data['source'], auth('admin')->id(),
+                isset($data['deposit']) ? (float) $data['deposit'] : null, $method, $this->extras($data),
             );
             $this->saveGuests($request, $booking);
         } catch (InvalidArgumentException|RuntimeException $e) {
@@ -108,7 +107,7 @@ class ReservationController extends Controller
             'booking' => $booking,
             'methods' => PaymentMethod::where('is_active', 1)->orderBy('payment_method_id')->get(),
             'allMethods' => PaymentMethod::orderBy('payment_method_id')->get(),
-            'roomType' => Roomdetails::find((int) explode(',', (string) $booking->roomid)[0]),
+            'roomNames' => Roomdetails::pluck('roomtype', 'roomid'),
             'lines' => $this->invoices->lines($booking),
             'wa' => $this->whatsappLink($booking),
         ]);
@@ -141,9 +140,9 @@ class ReservationController extends Controller
         $data = $this->validateBooking($request, false);
 
         try {
-            $room = Roomdetails::findOrFail($data['room']);
+            $lines = $this->linesFromData($data);
             $checkin = Carbon::parse($data['checkin']);
-            $this->reservations->modify($booking, $room, $checkin, Carbon::parse($data['checkout']), (int) $data['rooms'], (int) $data['adults'], (int) ($data['children'] ?? 0), $this->promo($data, $room, $checkin, $booking), auth('admin')->id());
+            $this->reservations->modifyLines($booking, $lines, $checkin, Carbon::parse($data['checkout']), $this->promo($data, $lines, $checkin, $booking), auth('admin')->id());
             $booking->update(['full_guest_name' => $data['guest_name'] ?? $booking->full_guest_name, 'special_request' => $data['special'] ?? null]);
         } catch (InvalidArgumentException|RuntimeException $e) {
             return back()->withInput()->withErrors(['booking' => $e->getMessage()]);
@@ -156,33 +155,40 @@ class ReservationController extends Controller
     public function quote(Request $request)
     {
         $d = $request->validate([
-            'room' => ['required', 'integer'],
             'checkin' => ['required', 'date'],
             'checkout' => ['required', 'date', 'after:checkin'],
-            'rooms' => ['required', 'integer', 'min:1', 'max:20'],
             'promo' => ['nullable', 'string', 'max:50'],
             'booking' => ['nullable', 'string', 'max:30'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-        ]);
+        ] + $this->lineRules());
 
-        $room = Roomdetails::findOrFail($d['room']);
         $in = Carbon::parse($d['checkin']);
         $out = Carbon::parse($d['checkout']);
+        $lines = $this->bookings->mergeLines($this->linesFromData($d));
+        abort_if(! $lines, 422, 'Choose a room type.');
         $current = ! empty($d['booking']) ? BookedInfo::where('booking_number', $d['booking'])->value('bookedid') : null;
-        $promo = ! empty($d['promo']) ? $this->bookings->findPromo($d['promo'], $room, $in) : null;
-        $quote = $this->bookings->quote($room, $in, $out, (int) $d['rooms'], $promo, (float) ($d['discount_percent'] ?? 0));
-        $free = $this->bookings->availableRoomNumbers((int) $room->roomid, $in, $out, $current ? (int) $current : null);
+        $promo = ! empty($d['promo']) ? $this->bookings->findPromoForRooms($d['promo'], array_map(fn ($l) => (int) $l['room']->roomid, $lines), $in) : null;
+        $quote = $this->bookings->quoteLines($lines, $in, $out, $promo, (float) ($d['discount_percent'] ?? 0));
+
+        $types = [];
+        foreach ($lines as $l) {
+            $free = $this->bookings->availableRoomNumbers((int) $l['room']->roomid, $in, $out, $current ? (int) $current : null);
+            $types[$l['room']->roomid] = ['available' => count($free), 'numbers' => $free, 'capacity' => (int) $l['room']->capacity * $l['rooms'], 'party' => $l['adults'] + $l['children']];
+        }
+        $first = reset($types);
+        $advance = app(\App\Services\AdvanceBookingService::class)->percent();
 
         return response()->json($quote + [
-            'available' => count($free),
-            'room_numbers' => $free,
+            'available' => $first['available'],
+            'room_numbers' => $first['numbers'],
+            'types' => $types,
             'commission' => round($quote['total'] * (float) ($d['commission_percent'] ?? 0) / 100, 2),
-            'advance_required' => app(\App\Services\AdvanceBookingService::class)->percent() > 0 ? round($quote['total'] * app(\App\Services\AdvanceBookingService::class)->percent() / 100, 2) : 0,
+            'advance_required' => $advance > 0 ? round($quote['total'] * $advance / 100, 2) : 0,
             'checkin_time' => \App\Support\Settings::row()->checkintime ?? '14:00',
             'checkout_time' => \App\Support\Settings::row()->checkouttime ?? '12:00',
             'promo_valid' => ! empty($d['promo']) ? (bool) $promo : null,
-            'capacity' => (int) $room->capacity * (int) $d['rooms'],
+            'capacity' => $first['capacity'],
         ]);
     }
 
@@ -306,16 +312,12 @@ class ReservationController extends Controller
     private function validateBooking(Request $request, bool $creating): array
     {
         $rules = [
-            'room' => ['required', 'integer', 'exists:roomdetails,roomid'],
             'checkin' => ['required', 'date'],
             'checkout' => ['required', 'date', 'after:checkin'],
-            'rooms' => ['required', 'integer', 'min:1', 'max:20'],
-            'adults' => ['required', 'integer', 'min:1', 'max:60'],
-            'children' => ['nullable', 'integer', 'min:0', 'max:60'],
             'guest_name' => ['nullable', 'string', 'max:255'],
             'special' => ['nullable', 'string', 'max:1000'],
             'promo' => ['nullable', 'string', 'max:50'],
-        ];
+        ] + $this->lineRules(true);
 
         if ($creating) {
             $rules += [
@@ -487,7 +489,47 @@ class ReservationController extends Controller
         ]);
     }
 
-    private function promo(array $data, Roomdetails $room, Carbon $checkin, ?BookedInfo $booking = null)
+    /**
+     * Rules for the room rows. The form posts lines[i][room|rooms|adults|children|numbers[]]; older callers post
+     * a single room as room / rooms / adults / children / room_numbers[].
+     */
+    private function lineRules(bool $adultsRequired = false): array
+    {
+        return [
+            'lines' => ['required_without:room', 'nullable', 'array', 'max:10'],
+            'lines.*.room' => ['required', 'integer', 'exists:roomdetails,roomid'],
+            'lines.*.rooms' => ['required', 'integer', 'min:1', 'max:20'],
+            'lines.*.adults' => [$adultsRequired ? 'required' : 'nullable', 'integer', 'min:1', 'max:60'],
+            'lines.*.children' => ['nullable', 'integer', 'min:0', 'max:60'],
+            'lines.*.numbers' => ['nullable', 'array', 'max:20'],
+            'lines.*.numbers.*' => ['string', 'max:20'],
+            'room' => ['required_without:lines', 'nullable', 'integer', 'exists:roomdetails,roomid'],
+            'rooms' => ['required_without:lines', 'nullable', 'integer', 'min:1', 'max:20'],
+            'adults' => [$adultsRequired ? 'required_without:lines' : 'nullable', 'nullable', 'integer', 'min:1', 'max:60'],
+            'children' => ['nullable', 'integer', 'min:0', 'max:60'],
+        ];
+    }
+
+    /** @return list<array{room:Roomdetails,rooms:int,adults:int,children:int,numbers:list<string>}> */
+    private function linesFromData(array $d): array
+    {
+        $rows = $d['lines'] ?? [[
+            'room' => $d['room'] ?? null, 'rooms' => $d['rooms'] ?? 1, 'adults' => $d['adults'] ?? 1, 'children' => $d['children'] ?? 0, 'numbers' => $d['room_numbers'] ?? [],
+        ]];
+        $rooms = Roomdetails::whereIn('roomid', array_filter(array_column($rows, 'room')))->get()->keyBy('roomid');
+
+        $lines = [];
+        foreach ($rows as $r) {
+            if (empty($r['room']) || ! isset($rooms[$r['room']])) {
+                continue;
+            }
+            $lines[] = ['room' => $rooms[$r['room']], 'rooms' => (int) ($r['rooms'] ?? 1), 'adults' => (int) ($r['adults'] ?? 1), 'children' => (int) ($r['children'] ?? 0), 'numbers' => array_values(array_filter(array_map('strval', $r['numbers'] ?? [])))];
+        }
+
+        return $this->bookings->mergeLines($lines);
+    }
+
+    private function promo(array $data, array $lines, Carbon $checkin, ?BookedInfo $booking = null)
     {
         if (empty($data['promo'])) {
             return null;
@@ -497,7 +539,7 @@ class ReservationController extends Controller
             return Promocode::whereRaw('UPPER(promocode) = ?', [strtoupper($data['promo'])])->first();
         }
 
-        return $this->bookings->findPromo($data['promo'], $room, $checkin)
-            ?? throw new InvalidArgumentException('That promo code is not valid for this room and stay.');
+        return $this->bookings->findPromoForRooms($data['promo'], array_map(fn ($l) => (int) $l['room']->roomid, $lines), $checkin)
+            ?? throw new InvalidArgumentException('That promo code is not valid for these rooms and this stay.');
     }
 }

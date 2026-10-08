@@ -59,7 +59,7 @@ class PurchaseController extends Controller
     {
         $return->load('purchase.supplier', 'movements');
 
-        return Pdf::loadView('pdf.purchase-return', ['return' => $return, 'hotel' => Settings::hotelName(), 'money' => fn ($v) => Money::format($v)])
+        return Pdf::loadView('pdf.purchase-return', ['return' => $return, 'hotel' => Settings::hotelName(), 'money' => fn ($v) => Money::pdf($v)])
             ->download('return-'.$return->number.'.pdf');
     }
 

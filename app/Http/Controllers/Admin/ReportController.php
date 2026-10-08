@@ -64,15 +64,16 @@ class ReportController extends Controller
 
         $roomTypes = Roomdetails::orderBy('roomtype')->get();
         $inventory = TblRoomnofloorassign::selectRaw('roomid, count(*) as n')->groupBy('roomid')->pluck('n', 'roomid');
-        $bookings = BookedInfo::whereNotIn('bookingstatus', ['1'])->whereDate('checkindate', '<=', $to)->whereDate('checkoutdate', '>', $from)->get(['roomid', 'total_room', 'checkindate', 'checkoutdate']);
+        $bookings = BookedInfo::whereNotIn('bookingstatus', ['1'])->whereDate('checkindate', '<=', $to)->whereDate('checkoutdate', '>', $from)->get(['roomid', 'total_room', 'room_no', 'nuofpeople', 'children', 'roomrate', 'checkindate', 'checkoutdate']);
 
         $days = [];
         for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
             $sold = [];
             foreach ($bookings as $b) {
                 if ($b->checkindate->copy()->startOfDay()->lte($d) && $b->checkoutdate->copy()->startOfDay()->gt($d)) {
-                    $roomId = (int) explode(',', $b->roomid)[0];
-                    $sold[$roomId] = ($sold[$roomId] ?? 0) + (int) $b->total_room;
+                    foreach ($b->roomLines() as $rl) {
+                        $sold[$rl['room_id']] = ($sold[$rl['room_id']] ?? 0) + $rl['rooms'];
+                    }
                 }
             }
             $days[] = ['date' => $d->copy(), 'sold' => $sold, 'total' => array_sum($sold)];

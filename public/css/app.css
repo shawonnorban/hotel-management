@@ -2,6 +2,13 @@
    Hotel Management – design system
    Bootstrap 5.3 + a calm "deep teal & brass" brand layer. Light and dark themes.
    ========================================================================== */
+/* Segoe UI is installed with Windows. To use it on other systems, copy the font files into public/fonts/
+   (segoeui.ttf, seguisb.ttf, segoeuib.ttf, segoeuii.ttf) — they are picked up automatically. */
+@font-face { font-family: "Segoe UI"; font-weight: 400; font-style: normal; src: local("Segoe UI"), local("SegoeUI"), url("../fonts/segoeui.ttf") format("truetype"); }
+@font-face { font-family: "Segoe UI"; font-weight: 400; font-style: italic; src: local("Segoe UI Italic"), local("SegoeUI-Italic"), url("../fonts/segoeuii.ttf") format("truetype"); }
+@font-face { font-family: "Segoe UI"; font-weight: 600; font-style: normal; src: local("Segoe UI Semibold"), local("SegoeUI-Semibold"), url("../fonts/seguisb.ttf") format("truetype"); }
+@font-face { font-family: "Segoe UI"; font-weight: 700; font-style: normal; src: local("Segoe UI Bold"), local("SegoeUI-Bold"), url("../fonts/segoeuib.ttf") format("truetype"); }
+
 :root {
     --brand: #0f766e;
     --brand-dark: #0b5a54;
@@ -18,7 +25,7 @@
     --sb-hover-ink: #0f172a;
     --sb-brand-ink: #0f172a;
     --sb-border: #e2e8f0;
-    --radius: .75rem;
+    --radius: .4rem;
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06), 0 1px 3px rgba(15, 23, 42, .08);
     --shadow-md: 0 10px 30px -12px rgba(15, 23, 42, .25);
     --bs-primary: var(--brand);
@@ -26,9 +33,12 @@
     --bs-link-color: var(--brand);
     --bs-link-hover-color: var(--brand-dark);
     --bs-link-color-rgb: 15, 118, 110;
-    --bs-border-radius: .55rem;
-    --bs-border-radius-lg: var(--radius);
-    --bs-body-font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --bs-border-radius: .4rem;
+    --bs-border-radius-sm: .4rem;
+    --bs-border-radius-lg: .4rem;
+    --bs-border-radius-xl: .4rem;
+    --bs-border-radius-xxl: .4rem;
+    --bs-body-font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
 }
 
 [data-bs-theme="dark"] {
@@ -76,13 +86,13 @@ h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
 .app { display: flex; min-height: 100vh; }
 .sidebar { width: 264px; flex: 0 0 264px; background: var(--sb-bg); color: var(--sb-ink); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 .sidebar .brand { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.25rem 1rem; color: var(--sb-brand-ink); text-decoration: none; font-weight: 700; font-size: 1.1rem; }
-.sidebar .brand .logo { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--brand), var(--accent)); display: grid; place-items: center; color: #fff; font-size: 1.1rem; }
+.sidebar .brand .logo { width: 36px; height: 36px; border-radius: .4rem; background: linear-gradient(135deg, var(--brand), var(--accent)); display: grid; place-items: center; color: #fff; font-size: 1.1rem; }
 .sidebar .group { padding: 1.1rem 1.25rem .35rem; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--sb-muted); font-weight: 700; }
 .sidebar .group-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; background: none; border: 0; text-align: left; cursor: pointer; margin-top: .35rem; padding-top: .6rem; padding-bottom: .55rem; }
 .sidebar .group-toggle:hover { color: var(--sb-ink); }
 .sidebar .group-toggle .caret { font-size: .7rem; transition: transform .2s ease; }
 .sidebar .group-toggle.collapsed .caret { transform: rotate(-90deg); }
-.sidebar .nav-link { display: flex; align-items: center; gap: .75rem; color: var(--sb-ink); padding: .55rem 1.25rem; margin: 1px .6rem; border-radius: .5rem; font-size: .92rem; }
+.sidebar .nav-link { display: flex; align-items: center; gap: .75rem; color: var(--sb-ink); padding: .55rem 1.25rem; margin: 1px .6rem; border-radius: .4rem; font-size: .92rem; }
 .sidebar .nav-link i { font-size: 1.05rem; opacity: .85; }
 .sidebar .nav-link:hover { background: var(--sb-hover-bg); color: var(--sb-hover-ink); }
 .sidebar .nav-link.active { background: var(--brand); color: var(--sidebar-active); box-shadow: 0 6px 16px -8px var(--brand); }
@@ -95,7 +105,7 @@ h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
 
 /* ---------- Stat cards ---------- */
 .stat { display: flex; gap: 1rem; align-items: center; padding: 1.1rem 1.25rem; }
-.stat .icon { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem; background: var(--brand-soft); color: var(--brand); flex: none; }
+.stat .icon { width: 46px; height: 46px; border-radius: .4rem; display: grid; place-items: center; font-size: 1.3rem; background: var(--brand-soft); color: var(--brand); flex: none; }
 .stat .label { color: var(--bs-secondary-color); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
 .stat .value { font-size: 1.55rem; font-weight: 700; line-height: 1.15; }
 .stat.accent .icon { background: #f7efe0; color: var(--accent); }
@@ -142,8 +152,11 @@ h1, h2, h3, h4, h5 { letter-spacing: -.01em; }
 .site-footer { background: var(--sidebar-bg); color: var(--sidebar-ink); }
 .site-footer a { color: #cfe0ea; text-decoration: none; }
 .site-footer a:hover { color: #fff; }
-.feature-icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-size: 1.5rem; }
+.feature-icon { width: 54px; height: 54px; border-radius: .4rem; display: grid; place-items: center; background: var(--brand-soft); color: var(--brand); font-size: 1.5rem; }
 .empty { text-align: center; padding: 3rem 1rem; color: var(--bs-secondary-color); }
 .empty i { font-size: 2.5rem; opacity: .5; display: block; margin-bottom: .5rem; }
 .ts-wrapper.form-select, .ts-control { border-radius: var(--bs-border-radius) !important; }
 @media print { .sidebar, .topbar, .no-print, .btn { display: none !important; } .page { padding: 0; } body { background: #fff; } }
+
+.page img:not(.no-zoom):not(a img), .zoomable img { cursor: zoom-in; }
+.page a > img { cursor: zoom-in; }

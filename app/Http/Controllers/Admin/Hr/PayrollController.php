@@ -79,7 +79,7 @@ class PayrollController extends Controller
     {
         abort_unless($item->run_id === $run->id && $run->status !== 'draft', 404);
 
-        return Pdf::loadView('pdf.payslip', ['run' => $run, 'item' => $item->load('employee.position', 'employee.department'), 'hotel' => Settings::hotelName(), 'money' => fn ($v) => Money::format($v)])
+        return Pdf::loadView('pdf.payslip', ['run' => $run, 'item' => $item->load('employee.position', 'employee.department'), 'hotel' => Settings::hotelName(), 'money' => fn ($v) => Money::pdf($v)])
             ->setPaper('a5', 'portrait')->stream('payslip-'.$run->period.'-'.$item->employee->code.'.pdf');
     }
 

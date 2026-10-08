@@ -111,6 +111,73 @@ class ReservationTest extends HotelTestCase
         $this->assertSame(1, BookedInfo::count());
     }
 
+    private function suite(): \App\Models\Roomdetails
+    {
+        $suite = \App\Models\Roomdetails::create(['roomtype' => 'Suite', 'roomsize' => 500, 'roomsizemesurement' => 'sqft', 'roomactive' => 1, 'bedsno' => 2, 'bedstype' => 1, 'roomdescription' => 'Big', 'capacity' => 4, 'rate' => 300, 'bedcharge' => 0, 'personcharge' => 0]);
+        foreach ([301, 302] as $no) {
+            \App\Models\TblRoomnofloorassign::create(['roomid' => $suite->roomid, 'floorid' => 1, 'roomno' => $no, 'status' => 1]);
+        }
+
+        return $suite;
+    }
+
+    public function test_one_booking_can_hold_several_room_types(): void
+    {
+        $suite = $this->suite();
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), [
+            'source' => 'phone', 'guest_id' => $this->guest->customerid,
+            'lines' => [
+                ['room' => $this->room->roomid, 'rooms' => 2, 'adults' => 3, 'children' => 1, 'numbers' => ['102']],
+                ['room' => $suite->roomid, 'rooms' => 1, 'adults' => 2, 'children' => 0],
+            ],
+        ]))->assertSessionHasNoErrors();
+
+        $b = BookedInfo::firstOrFail();
+        $this->assertSame(3, (int) $b->total_room);
+        $this->assertSame([(string) $this->room->roomid, (string) $this->room->roomid, (string) $suite->roomid], explode(',', $b->roomid));
+        $this->assertSame(['102', '101', '301'], explode(',', $b->room_no)); // chosen room first, the rest picked
+        // 2 nights: Deluxe 100 × 2 rooms = 400, Suite 300 × 1 = 600 → 1000; +5% tax +10% service = 1150.
+        $this->assertSame('1000.00', $b->subtotal);
+        $this->assertSame('1150.00', $b->total_price);
+        $lines = $b->roomLines();
+        $this->assertSame([2, 1], [$lines[0]['rooms'], $lines[1]['rooms']]);
+        $this->assertSame([3, 2], [$lines[0]['adults'], $lines[1]['adults']]);
+
+        $this->get('/admin/reservations/'.$b->booking_number)->assertOk()->assertSee('Deluxe')->assertSee('Suite');
+        $this->get('/admin/reservations/'.$b->booking_number.'/invoice')->assertOk();
+
+        // Both types are now blocked for the same nights (Deluxe fully, Suite one of two).
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), ['source' => 'phone', 'guest_id' => $this->guest->customerid, 'lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 1]]]))->assertSessionHasErrors('booking');
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), ['source' => 'phone', 'guest_id' => $this->guest->customerid, 'lines' => [['room' => $suite->roomid, 'rooms' => 1, 'adults' => 1]]]))->assertSessionHasNoErrors();
+    }
+
+    public function test_editing_a_multi_type_booking_and_the_quote_with_lines(): void
+    {
+        $suite = $this->suite();
+        $stay = $this->stay(3, 2);
+        $this->post('/admin/reservations', array_merge($stay, ['source' => 'phone', 'guest_id' => $this->guest->customerid, 'lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2], ['room' => $suite->roomid, 'rooms' => 1, 'adults' => 3]]]))->assertSessionHasNoErrors();
+        $b = BookedInfo::firstOrFail();
+
+        $this->get('/admin/reservations/'.$b->booking_number.'/edit')->assertOk()->assertSee('Suite');
+        // Drop the suite, keep one Deluxe room: price falls to 2 × 100 + 15% = 230.
+        $this->put('/admin/reservations/'.$b->booking_number, array_merge($stay, ['lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2]]]))->assertSessionHasNoErrors();
+        $b = $b->fresh();
+        $this->assertSame(1, (int) $b->total_room);
+        $this->assertSame('230.00', $b->total_price);
+        $this->assertSame('101', $b->room_no);
+
+        $q = $this->get('/admin/reservations/quote?'.http_build_query($stay + ['lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2], ['room' => $suite->roomid, 'rooms' => 2, 'adults' => 8]]]))->assertOk()->json();
+        $this->assertSame(3, $q['rooms']);
+        $this->assertCount(2, $q['lines']);
+        $this->assertEquals(1400.0, $q['subtotal']);
+        $this->assertSame(2, $q['types'][$suite->roomid]['available']);
+        $this->assertSame(8, $q['types'][$suite->roomid]['party']);
+        $this->assertSame(8, $q['types'][$suite->roomid]['capacity']);
+
+        // Too many guests for the chosen rooms is refused.
+        $this->post('/admin/reservations', array_merge($this->stay(20, 1), ['source' => 'phone', 'guest_id' => $this->guest->customerid, 'lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 5]]]))->assertSessionHasErrors('booking');
+    }
+
     public function test_guest_profile_page_shows_history_and_is_linked_from_the_booking(): void
     {
         $b = $this->create();
