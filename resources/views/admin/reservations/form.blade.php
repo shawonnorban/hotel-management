@@ -97,7 +97,7 @@
         </div></div></div>
         @endunless
     </div>
-    <div class="text-end mb-5"><button class="btn btn-primary btn-lg px-5">{{ $editing ? 'Save changes' : 'Check In' }}</button></div>
+    <div class="text-end mb-5"><button class="btn btn-primary btn-lg px-5">{{ $editing ? 'Save changes' : 'Save reservation' }}</button></div>
     @unless ($editing)
 <div class="modal fade" id="newCustomerModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title">New customer</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -154,8 +154,8 @@
                 box.innerHTML = h;
                 var av = $('availability');
                 if (av) { av.innerHTML = d.available >= d.rooms ? '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + d.available + ' room(s) available</span>' : '<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Only ' + d.available + ' room(s) available</span>'; }
-                if ($('rentIn')) { $('rentIn').value = q.checkin + ' ' + d.checkin_time; $('rentOut').value = q.checkout + ' ' + d.checkout_time; $('rentAmt').value = money(d.subtotal); }
-                if ($('inTime')) { $('inTime').textContent = 'from ' + d.checkin_time; $('outTime').textContent = 'until ' + d.checkout_time; }
+                if ($('rentIn')) { $('rentIn').value = q.checkin + ' ' + d.checkin_time.slice(0, 5); $('rentOut').value = q.checkout + ' ' + String(d.checkout_time).slice(0, 5); $('rentAmt').value = money(d.subtotal); }
+                if ($('inTime')) { $('inTime').textContent = 'from ' + String(d.checkin_time).slice(0, 5); $('outTime').textContent = 'until ' + String(d.checkout_time).slice(0, 5); }
                 if ($('discountAmt')) { $('discountAmt').value = money(d.manual_discount); $('commissionAmt').value = money(d.commission); }
                 if ($('advanceHint') && d.advance_required > 0) { $('advanceHint').innerHTML = 'Required advance: <strong>' + money(d.advance_required) + '</strong> <button type="button" class="btn btn-sm btn-link p-0 ms-1" id="useAdv">use it</button>'; var u = $('useAdv'); if (u) { u.onclick = function () { $('deposit').value = d.advance_required.toFixed(2); }; } }
                 var rn = $('roomNumbers');

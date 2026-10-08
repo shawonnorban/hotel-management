@@ -31,6 +31,7 @@ abstract class HotelTestCase extends TestCase
         parent::setUp();
 
         Settings::flush();
+        \App\Support\AppSettings::flush();
         $this->seed(RolesAndPermissionsSeeder::class);
         $this->seed(ChartOfAccountsSeeder::class);
 

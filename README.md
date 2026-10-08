@@ -50,6 +50,26 @@ Existing staff flagged as administrators become *Super Admin*. Old accounting, p
 untouched but are no longer used: the new modules keep their data in new tables (`ledger_*`, `journal_*`,
 `inventory_*`, `purchase*`, `hr_*`). Back up first, and do not run both systems against the same database.
 
+## Try it with sample data
+
+On a fresh, empty installation (after `php artisan migrate --seed`) run:
+
+```
+php artisan hotel:demo-data
+```
+
+It fills every module through the normal services — four room types with room numbers, guests, twelve reservations
+(checked out, in house, upcoming, cancelled), purchases with returns and wastage, ten employees with a paid payroll run,
+rosters, housekeeping and laundry, transport and hall bookings — so the ledger, stock and reports show real figures.
+It refuses to run when reservations already exist (use `--force` to add anyway). Never run it on your live data.
+
+## Advance bookings
+
+*Front desk → Advance bookings* lists upcoming reservations with the advance received. Under the list, set a
+**required advance percentage**: new reservations then stay *pending* until that share is paid (the booking is
+confirmed automatically when the payment arrives), and **release after N days** cancels pending bookings that
+received nothing (`hotel:release-unpaid-bookings`, run hourly by the scheduler). Both default to 0 (off).
+
 ## Money flow in one paragraph
 
 A guest payment is recorded as a deposit (cash / bank / gateway account debited, *Guest deposits* credited). At

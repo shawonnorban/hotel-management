@@ -30,7 +30,7 @@
             <td class="text-end">{{ \App\Support\Money::format($b->total_price) }}</td><td class="text-end">{{ \App\Support\Money::format($b->paid_amount) }}</td>
             <td class="text-end {{ $r['shortfall'] > 0 ? 'text-danger fw-semibold' : '' }}">{{ $r['required'] > 0 ? \App\Support\Money::format($r['required']) : '—' }}</td>
             <td class="text-end">{{ \App\Support\Money::format($b->balance) }}</td>
-            <td class="text-end">@can('reservations.payments')@if ($b->balance > 0)<button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#advModal" data-action="{{ route('admin.advance.receive', $b->booking_number) }}" data-amount="{{ $r['shortfall'] > 0 ? $r['shortfall'] : '' }}" data-title="#{{ $b->booking_number }}">Receive advance</button>@endif @endcan</td></tr>
+            <td class="text-end text-nowrap">@can('reservations.payments')@if ($b->balance > 0)<button class="btn btn-sm btn-outline-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#advModal" data-action="{{ route('admin.advance.receive', $b->booking_number) }}" data-amount="{{ $r['shortfall'] > 0 ? $r['shortfall'] : '' }}" data-title="#{{ $b->booking_number }}">Receive advance</button>@endif @endcan</td></tr>
     @empty
         <tr><td colspan="9"><div class="empty"><i class="bi bi-calendar-plus"></i>No upcoming reservations.</div></td></tr>
     @endforelse
