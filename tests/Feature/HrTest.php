@@ -19,7 +19,9 @@ use App\Services\Hr\PayrollService;
 use App\Services\Hr\WorkCalendar;
 use App\Services\LedgerService;
 use App\Support\AppSettings;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class HrTest extends HotelTestCase
 {
@@ -49,6 +51,31 @@ class HrTest extends HotelTestCase
     private function item(HrPayrollRun $run, HrEmployee $e)
     {
         return $run->items()->get()->firstWhere('employee_id', $e->id);
+    }
+
+    public function test_employee_profile_stores_photos_documents_education_and_experience(): void
+    {
+        Storage::fake('public');
+        $this->put('/admin/hr-employees/'.$this->anna->id, [
+            'first_name' => 'Anna', 'last_name' => 'Lee', 'join_date' => '2025-01-01', 'basic_salary' => 3000,
+            'father_name' => 'Tom Lee', 'blood_group' => 'O+', 'emergency_phone' => '999', 'employment_type' => 'Full time',
+            'photo' => UploadedFile::fake()->image('p.jpg'), 'id_front' => UploadedFile::fake()->image('f.jpg'), 'id_back' => UploadedFile::fake()->image('b.jpg'),
+        ])->assertSessionHasNoErrors();
+        $anna = $this->anna->fresh();
+        $this->assertSame('Tom Lee', $anna->father_name);
+        $this->assertNotNull($anna->photo);
+        $this->assertNotNull($anna->id_back);
+
+        $this->post(route('admin.hr.employees.records.store', [$anna, 'documents']), ['title' => 'Contract', 'file' => UploadedFile::fake()->create('c.pdf', 20, 'application/pdf')])->assertSessionHasNoErrors();
+        $this->post(route('admin.hr.employees.records.store', [$anna, 'education']), ['degree' => 'BBA', 'passing_year' => 2019])->assertSessionHasNoErrors();
+        $this->post(route('admin.hr.employees.records.store', [$anna, 'experience']), ['company' => 'Hotel X', 'title' => 'Clerk'])->assertSessionHasNoErrors();
+
+        $this->get(route('admin.hr.employees.profile', $anna))->assertOk()->assertSee('Tom Lee')->assertSee('Contract')->assertSee('BBA')->assertSee('Hotel X');
+
+        $doc = $anna->documents()->first();
+        $this->delete(route('admin.hr.employees.records.destroy', [$anna, 'documents', $doc->id]))->assertRedirect();
+        $this->assertSame(0, $anna->documents()->count());
+        $this->post(route('admin.hr.employees.records.store', [$anna, 'bogus']), ['x' => 1])->assertNotFound();
     }
 
     public function test_basic_payroll_run(): void

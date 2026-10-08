@@ -30,6 +30,21 @@ class HrEmployee extends Model
         return $this->hasMany(HrSalaryComponent::class, 'employee_id');
     }
 
+    public function documents()
+    {
+        return $this->hasMany(HrEmployeeDocument::class, 'employee_id');
+    }
+
+    public function education()
+    {
+        return $this->hasMany(HrEmployeeEducation::class, 'employee_id')->orderByDesc('passing_year');
+    }
+
+    public function experience()
+    {
+        return $this->hasMany(HrEmployeeExperience::class, 'employee_id')->orderByDesc('from_date');
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim($this->first_name.' '.$this->last_name);

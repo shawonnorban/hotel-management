@@ -168,6 +168,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::delete('/payroll/{run}', [Admin\Hr\PayrollController::class, 'destroy'])->name('payroll.destroy');
                 Route::put('/employees/{employee}/salary', [Admin\Hr\EmployeeController::class, 'updateSalary'])->name('employees.salary.update');
             });
+            Route::middleware('can:hr-employees.view')->get('/employees/{employee}/profile', [Admin\Hr\EmployeeProfileController::class, 'show'])->name('employees.profile');
+            Route::middleware('can:hr-employees.edit')->group(function () {
+                Route::post('/employees/{employee}/records/{kind}', [Admin\Hr\EmployeeProfileController::class, 'store'])->name('employees.records.store');
+                Route::delete('/employees/{employee}/records/{kind}/{record}', [Admin\Hr\EmployeeProfileController::class, 'destroy'])->whereNumber('record')->name('employees.records.destroy');
+            });
             Route::post('/candidates/{candidate}/hire', [Admin\Hr\EmployeeController::class, 'hire'])->middleware('can:hr-employees.create')->name('candidates.hire');
         });
 
