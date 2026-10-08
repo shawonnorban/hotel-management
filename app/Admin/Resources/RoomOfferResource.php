@@ -31,4 +31,14 @@ class RoomOfferResource extends Resource
             Field::textarea('offertext', 'Details'),
         ];
     }
+    public function grouped(): ?array
+    {
+        $types = Roomdetails::pluck('roomtype', 'roomid');
+
+        return [
+            'key' => 'roomid', 'heading' => 'Room type', 'parent' => fn ($id) => $types[$id] ?? 'Room #'.$id,
+            'item' => fn ($row) => ['text' => $row->offertitle, 'sub' => $row->offer.'% until '.\Illuminate\Support\Carbon::parse($row->offer_date)->format('d M Y'), 'url' => route('admin.resource.edit', ['offers', $row->getKey()])],
+        ];
+    }
+
 }

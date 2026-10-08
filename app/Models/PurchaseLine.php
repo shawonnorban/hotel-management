@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PurchaseItem extends Model
+class PurchaseLine extends Model
 {
+    protected $table = 'purchase_items';
+
     public $timestamps = false;
 
     protected $guarded = [];

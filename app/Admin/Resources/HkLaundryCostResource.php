@@ -35,6 +35,16 @@ class HkLaundryCostResource extends Resource
         ];
     }
 
+    public function grouped(): ?array
+    {
+        $products = HkLaundryProduct::pluck('name', 'id');
+
+        return [
+            'key' => 'product_id', 'heading' => 'Item', 'parent' => fn ($id) => $products[$id] ?? 'Item #'.$id,
+            'item' => fn ($row) => ['text' => HkLaundryCost::SERVICES[$row->service] ?? $row->service, 'sub' => \App\Support\Money::format($row->cost), 'url' => route('admin.resource.edit', ['hk-laundry-costs', $row->getKey()])],
+        ];
+    }
+
     public function beforeSave(array $data, ?\Illuminate\Database\Eloquent\Model $model): array
     {
         $dupe = HkLaundryCost::where('product_id', $data['product_id'])->where('service', $data['service'])->when($model, fn ($q) => $q->where('id', '!=', $model->id))->exists();

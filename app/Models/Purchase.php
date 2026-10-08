@@ -20,7 +20,7 @@ class Purchase extends Model
 
     public function items()
     {
-        return $this->hasMany(PurchaseItem::class)->with('item.unit');
+        return $this->hasMany(PurchaseLine::class)->with('item.unit');
     }
 
     public function payments()

@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\InventoryItem;
 use App\Models\LedgerAccount;
 use App\Models\Purchase;
-use App\Models\PurchaseItem;
+use App\Models\PurchaseLine;
 use App\Models\PurchasePayment;
 use App\Models\PurchaseReturn;
 use App\Models\Supplier;
@@ -123,8 +123,8 @@ class PurchaseService
             $credit = 0.0;      // what the supplier credits us
             $inventory = 0.0;   // what the stock was carried at
             foreach ($quantities as $lineId => $qty) {
-                /** @var PurchaseItem $line */
-                $line = PurchaseItem::where('purchase_id', $purchase->id)->lockForUpdate()->findOrFail($lineId);
+                /** @var PurchaseLine $line */
+                $line = PurchaseLine::where('purchase_id', $purchase->id)->lockForUpdate()->findOrFail($lineId);
                 if ($qty > $line->returnable + 0.0004) {
                     throw new InvalidArgumentException("Only {$line->returnable} of {$line->item->name} can still be returned.");
                 }

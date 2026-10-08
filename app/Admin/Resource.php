@@ -75,6 +75,24 @@ abstract class Resource
         return [];
     }
 
+    /**
+     * Show the list as one row per parent with its items inside (instead of one row per record).
+     * Return null for the normal table, or:
+     *   'key'     => column the rows are grouped by,
+     *   'parent'  => fn (mixed $key): string          label of the parent,
+     *   'heading' => 'Room type',                       column title,
+     *   'item'    => fn (Model $row): array{text:string,sub?:string,image?:string,url?:string},
+     *   'manage'  => fn (mixed $key): ?string          link to edit the whole group (optional),
+     *   'manage_label' => 'Edit room type',
+     *   'add'     => bool                                show the "Add" button (default true).
+     *
+     * @return array<string,mixed>|null
+     */
+    public function grouped(): ?array
+    {
+        return null;
+    }
+
     public function modelInstance(): Model
     {
         return new (static::$model);

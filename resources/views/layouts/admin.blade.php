@@ -34,7 +34,18 @@
     <div class="app-main">
         <header class="topbar">
             <button class="btn btn-light d-lg-none" data-sidebar-toggle aria-label="Menu"><i class="bi bi-list fs-5"></i></button>
+            @if (collect($quickLinks)->contains(fn ($l) => $l[0] === 'Arrivals today'))
+                <form method="get" action="{{ route('admin.reservations.index') }}" class="d-none d-xl-block" role="search"><div class="input-group input-group-sm"><span class="input-group-text"><i class="bi bi-search"></i></span><input type="search" name="q" class="form-control" style="width:200px" placeholder="Find booking, guest, phone…" aria-label="Find a reservation"></div></form>
+            @endif
+            <div class="d-none d-lg-flex gap-1 quick-links">
+                @foreach ($quickLinks as [$label, $icon, $url, $class])<a href="{{ $url }}" class="btn btn-sm {{ $class }}" title="{{ $label }}" data-bs-toggle="tooltip" data-bs-placement="bottom" aria-label="{{ $label }}"><i class="bi {{ $icon }}"></i></a>@endforeach
+            </div>
+            @if ($quickLinks)
+            <div class="dropdown d-lg-none"><button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" aria-label="Quick links"><i class="bi bi-lightning-charge"></i></button>
+                <ul class="dropdown-menu">@foreach ($quickLinks as [$label, $icon, $url])<li><a class="dropdown-item" href="{{ $url }}"><i class="bi {{ $icon }} me-2"></i>{{ $label }}</a></li>@endforeach</ul></div>
+            @endif
             <div class="flex-grow-1"></div>
+            <span class="d-none d-xl-inline small text-body-secondary fw-semibold text-nowrap" id="topClock" aria-label="Current time"></span>
             <a href="{{ route('home') }}" class="btn btn-sm btn-outline-secondary d-none d-md-inline-flex gap-1" target="_blank"><i class="bi bi-box-arrow-up-right"></i> View website</a>
             <button class="btn btn-sm btn-outline-secondary" data-theme-toggle title="Toggle dark mode"><i class="bi bi-circle-half"></i></button>
             <div class="dropdown">

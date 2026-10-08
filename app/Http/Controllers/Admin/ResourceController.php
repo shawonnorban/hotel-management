@@ -42,6 +42,12 @@ class ResourceController extends Controller
             return $this->exportCsv($res, $query);
         }
 
+        if ($config = $res->grouped()) {
+            $groups = $query->get()->groupBy($config['key'])->map(fn ($rows, $key) => ['key' => $key, 'title' => (string) ($config['parent'])($key), 'rows' => $rows])->sortBy('title', SORT_NATURAL | SORT_FLAG_CASE)->values();
+
+            return view('admin.resource.grouped', ['res' => $res, 'config' => $config, 'groups' => $groups, 'term' => $term]);
+        }
+
         return view('admin.resource.index', [
             'res' => $res,
             'rows' => $query->paginate(20)->withQueryString(),

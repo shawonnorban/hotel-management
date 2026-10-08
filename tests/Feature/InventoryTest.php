@@ -7,7 +7,7 @@ use App\Models\ItemCategory;
 use App\Models\JournalEntry;
 use App\Models\LedgerAccount;
 use App\Models\Purchase;
-use App\Models\PurchaseItem;
+use App\Models\PurchaseLine;
 use App\Models\PurchaseReturn;
 use App\Models\StockMovement;
 use App\Models\Supplier;
@@ -122,7 +122,7 @@ class InventoryTest extends HotelTestCase
     public function test_return_goods_reduces_stock_and_payable(): void
     {
         $purchase = $this->buy([['item' => $this->soap->id, 'quantity' => 100, 'unit_cost' => 2]]);
-        $line = PurchaseItem::firstOrFail();
+        $line = PurchaseLine::firstOrFail();
 
         $this->post("/admin/purchasing/purchases/{$purchase->id}/return", ['return_date' => today()->toDateString(), 'reason' => 'Damaged', 'qty' => [$line->id => 10]])->assertSessionHasNoErrors();
 
@@ -141,7 +141,7 @@ class InventoryTest extends HotelTestCase
     public function test_cannot_return_goods_that_were_already_used(): void
     {
         $purchase = $this->buy([['item' => $this->soap->id, 'quantity' => 10, 'unit_cost' => 2]]);
-        $line = PurchaseItem::firstOrFail();
+        $line = PurchaseLine::firstOrFail();
         $this->post('/admin/purchasing/stock/issue', ['item' => $this->soap->id, 'quantity' => 8, 'reason' => 'Rooms'])->assertSessionHasNoErrors();
 
         $this->post("/admin/purchasing/purchases/{$purchase->id}/return", ['return_date' => today()->toDateString(), 'qty' => [$line->id => 5]])->assertSessionHasErrors('action');
@@ -168,7 +168,7 @@ class InventoryTest extends HotelTestCase
     public function test_returns_list_invoice_destroyed_list_and_stock_report(): void
     {
         $purchase = $this->buy([['item' => $this->soap->id, 'quantity' => 100, 'unit_cost' => 2]]);
-        $line = PurchaseItem::firstOrFail();
+        $line = PurchaseLine::firstOrFail();
         $this->post("/admin/purchasing/purchases/{$purchase->id}/return", ['return_date' => today()->toDateString(), 'reason' => 'Damaged', 'qty' => [$line->id => 10]])->assertSessionHasNoErrors();
         $this->post('/admin/purchasing/stock/waste', ['item' => $this->soap->id, 'quantity' => 5, 'reason' => 'Expired'])->assertSessionHasNoErrors();
 

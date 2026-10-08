@@ -226,4 +226,27 @@ class ResourceTest extends HotelTestCase
         $this->assertSame(1, RoomfailityRefAccomodation::where('room_id', $room->roomid)->count());
         $this->assertSame(3, RoomImage::where('room_id', $room->roomid)->count());
     }
+
+    public function test_multi_item_lists_show_one_row_per_parent(): void
+    {
+        $this->actingAs($this->staff, 'admin');
+        $type = Roomfacilitytype::create(['facilitytypetitle' => 'Bathroom']);
+        $a = Roomfacilitydetails::create(['facilitytitle' => 'Rain shower', 'facilitytypeid' => $type->facilitytypeid]);
+        $b = Roomfacilitydetails::create(['facilitytitle' => 'Bathtub', 'facilitytypeid' => $type->facilitytypeid]);
+        foreach ([$a, $b] as $f) {
+            RoomfailityRefAccomodation::create(['room_id' => $this->room->roomid, 'facilityid' => $f->facilityid, 'facilititypeid' => $type->facilitytypeid]);
+        }
+        RoomImage::create(['room_id' => $this->room->roomid, 'room_imagename' => 'storage/uploads/x1.jpg', 'sort_order' => 0]);
+        RoomImage::create(['room_id' => $this->room->roomid, 'room_imagename' => 'storage/uploads/x2.jpg', 'sort_order' => 1]);
+        \App\Models\TblComplementary::create(['roomtype' => 'Deluxe', 'complementaryname' => 'Breakfast', 'rate' => 500, 'status' => 1]);
+        \App\Models\TblComplementary::create(['roomtype' => 'Deluxe', 'complementaryname' => 'Airport pickup', 'rate' => 1500, 'status' => 1]);
+
+        $r = $this->get('/admin/room-facilities')->assertOk()->assertSee('Rain shower')->assertSee('Bathtub')->assertSee('Edit facilities');
+        $this->assertSame(1, substr_count($r->getContent(), '<tr>') - 1); // header row + one room type
+        $r = $this->get('/admin/room-images')->assertOk()->assertSee('Manage photos')->assertSee('Cover');
+        $this->assertSame(2, substr_count($r->getContent(), 'storage/uploads/x'));
+        $r = $this->get('/admin/services')->assertOk()->assertSee('Breakfast')->assertSee('Airport pickup');
+        $this->assertSame(1, substr_count($r->getContent(), '<tr>') - 1);
+        $this->get('/admin/room-facilities?q=zzzz')->assertOk()->assertSee('No room facilities found');
+    }
 }

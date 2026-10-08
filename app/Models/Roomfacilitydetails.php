@@ -13,4 +13,9 @@ class Roomfacilitydetails extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    public function type()
+    {
+        return $this->belongsTo(Roomfacilitytype::class, 'facilitytypeid', 'facilitytypeid');
+    }
 }

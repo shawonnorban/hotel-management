@@ -31,4 +31,12 @@ class ComplementaryResource extends Resource
             Field::toggle('status', 'Active')->listed(),
         ];
     }
+    public function grouped(): ?array
+    {
+        return [
+            'key' => 'roomtype', 'heading' => 'Room type', 'parent' => fn ($name) => (string) $name,
+            'item' => fn ($row) => ['text' => $row->complementaryname, 'sub' => \App\Support\Money::format($row->rate).((int) $row->status === 1 ? '' : ' · off'), 'url' => route('admin.resource.edit', ['services', $row->getKey()])],
+        ];
+    }
+
 }

@@ -178,6 +178,20 @@ class ReservationTest extends HotelTestCase
         $this->post('/admin/reservations', array_merge($this->stay(20, 1), ['source' => 'phone', 'guest_id' => $this->guest->customerid, 'lines' => [['room' => $this->room->roomid, 'rooms' => 1, 'adults' => 5]]]))->assertSessionHasErrors('booking');
     }
 
+    public function test_reservations_index_has_tiles_filters_csv_and_the_topbar_quick_links(): void
+    {
+        $b = $this->create();
+        $b->update(['checkindate' => today(), 'checkoutdate' => today()->addDay()]);
+
+        $this->get('/admin/reservations')->assertOk()->assertSee('Arrivals today')->assertSee('Balance due')->assertSee('#'.$b->booking_number)->assertSee('Deluxe')
+            ->assertSee('Quick links', false)->assertSee('Find booking, guest, phone', false)->assertSee('title="New reservation"', false);
+        $this->get('/admin/reservations?view=arrivals&sort=arrival')->assertOk()->assertSee('#'.$b->booking_number);
+        $this->get('/admin/reservations?view=inhouse')->assertOk()->assertDontSee('#'.$b->booking_number);
+        $csv = $this->get('/admin/reservations?export=csv')->assertOk()->streamedContent();
+        $this->assertStringContainsString($b->booking_number, $csv);
+        $this->assertStringContainsString('Deluxe x1', $csv);
+    }
+
     public function test_guest_profile_page_shows_history_and_is_linked_from_the_booking(): void
     {
         $b = $this->create();

@@ -124,6 +124,14 @@
                 flatpickr(el, { dateFormat: 'H:i', enableTime: true, noCalendar: true, time_24hr: true });
             });
         }
+        if (window.bootstrap) {
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) { new bootstrap.Tooltip(el); });
+        }
+        var clock = document.getElementById('topClock');
+        if (clock) {
+            var tick = function () { clock.textContent = new Date().toLocaleString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false }); };
+            tick(); setInterval(tick, 20000);
+        }
         if (window.TomSelect) {
             document.querySelectorAll('select[data-search]').forEach(function (el) { new TomSelect(el, { allowEmptyOption: true, maxOptions: 500 }); });
         }

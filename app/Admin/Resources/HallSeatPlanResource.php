@@ -38,6 +38,16 @@ class HallSeatPlanResource extends Resource
         ];
     }
 
+    public function grouped(): ?array
+    {
+        $halls = \App\Models\Hall::pluck('name', 'id');
+
+        return [
+            'key' => 'hall_id', 'heading' => 'Hall', 'parent' => fn ($id) => $halls[$id] ?? 'Hall #'.$id,
+            'item' => fn ($row) => ['text' => $row->name, 'sub' => (\App\Models\HallSeatPlan::LAYOUTS[$row->layout] ?? $row->layout).' · '.$row->seats.' seats', 'url' => route('admin.resource.edit', ['hall-seat-plans', $row->getKey()])],
+        ];
+    }
+
     public function beforeSave(array $data, ?Model $model): array
     {
         $data['tables'] = $data['tables'] ?? 0;

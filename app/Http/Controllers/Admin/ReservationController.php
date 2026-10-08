@@ -40,12 +40,13 @@ class ReservationController extends Controller
         $f = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'status' => ['nullable', 'in:'.implode(',', array_keys(BookedInfo::STATUS_LABELS))],
-            'view' => ['nullable', 'in:arrivals,departures,inhouse,unpaid'],
+            'view' => ['nullable', 'in:arrivals,departures,inhouse,unpaid,pending,upcoming'],
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
+            'sort' => ['nullable', 'in:newest,arrival'],
         ]);
 
-        $bookings = BookedInfo::with('customer')
+        $query = BookedInfo::with('customer')
             ->when($f['q'] ?? null, function ($query, $term) {
                 $like = '%'.addcslashes($term, '%_\\').'%';
                 $query->where(fn ($q) => $q->where('booking_number', 'like', $like)
@@ -59,14 +60,46 @@ class ReservationController extends Controller
                 'departures' => $q->whereDate('checkoutdate', today())->where('bookingstatus', '4'),
                 'inhouse' => $q->where('bookingstatus', '4'),
                 'unpaid' => $q->whereNotIn('bookingstatus', ['1'])->whereColumn('paid_amount', '<', 'total_price'),
+                'pending' => $q->where('bookingstatus', '0'),
+                'upcoming' => $q->whereIn('bookingstatus', ['0', '2'])->whereDate('checkindate', '>=', today()),
             })
             ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('checkindate', '>=', $v))
-            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('checkindate', '<=', $v))
-            ->orderByDesc('bookedid')
-            ->paginate(20)
-            ->withQueryString();
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('checkindate', '<=', $v));
 
-        return view('admin.reservations.index', ['bookings' => $bookings, 'f' => $f]);
+        if (($f['sort'] ?? '') === 'arrival') {
+            $query->orderBy('checkindate')->orderBy('bookedid');
+        } else {
+            $query->orderByDesc('bookedid');
+        }
+
+        if ($request->query('export') === 'csv') {
+            $names = Roomdetails::pluck('roomtype', 'roomid');
+
+            return response()->streamDownload(function () use ($query, $names) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['Booking', 'Guest', 'Phone', 'Check-in', 'Check-out', 'Nights', 'Rooms', 'Room numbers', 'Source', 'Status', 'Total', 'Paid', 'Balance']);
+                $query->chunk(200, function ($chunk) use ($out, $names) {
+                    foreach ($chunk as $b) {
+                        $types = collect($b->roomLines())->map(fn ($l) => ($names[$l['room_id']] ?? 'Room').' x'.$l['rooms'])->implode('; ');
+                        $row = [$b->booking_number, $b->full_guest_name ?: $b->customer?->full_name, $b->customer?->cust_phone, $b->checkindate->format('Y-m-d'), $b->checkoutdate->format('Y-m-d'), $b->nights, $types, $b->room_no, $b->source, $b->status_label, $b->total_price, $b->paid_amount, $b->balance];
+                        fputcsv($out, array_map(fn ($v) => is_string($v) && preg_match('/^[=+\-@\t\r]/', $v) ? "'".$v : $v, $row));
+                    }
+                });
+                fclose($out);
+            }, 'reservations-'.today()->format('Ymd').'.csv', ['Content-Type' => 'text/csv']);
+        }
+
+        $open = fn () => BookedInfo::query();
+        $stats = [
+            'arrivals' => $open()->whereDate('checkindate', today())->whereIn('bookingstatus', ['0', '2'])->count(),
+            'inhouse' => $open()->where('bookingstatus', '4')->count(),
+            'departures' => $open()->whereDate('checkoutdate', today())->where('bookingstatus', '4')->count(),
+            'pending' => $open()->where('bookingstatus', '0')->count(),
+            'upcoming' => $open()->whereIn('bookingstatus', ['0', '2'])->whereDate('checkindate', '>=', today())->count(),
+            'unpaid' => (float) $open()->whereNotIn('bookingstatus', ['1'])->whereColumn('paid_amount', '<', 'total_price')->selectRaw('coalesce(sum(total_price - paid_amount),0) as due')->value('due'),
+        ];
+
+        return view('admin.reservations.index', ['bookings' => $query->paginate(20)->withQueryString(), 'f' => $f, 'stats' => $stats, 'roomNames' => Roomdetails::pluck('roomtype', 'roomid')]);
     }
 
     public function create(Request $request)

@@ -31,6 +31,17 @@ class RoomImageResource extends Resource
         ];
     }
 
+    public function grouped(): ?array
+    {
+        $types = Roomdetails::pluck('roomtype', 'roomid');
+
+        return [
+            'key' => 'room_id', 'heading' => 'Room type', 'parent' => fn ($id) => $types[$id] ?? 'Room #'.$id,
+            'item' => fn ($row) => ['text' => $types[$row->room_id] ?? '', 'image' => $row->room_imagename, 'sub' => (int) $row->sort_order === 0 ? 'Cover' : null],
+            'manage' => fn ($id) => route('admin.resource.edit', ['room-types', $id]).'#f_gallery', 'manage_label' => 'Manage photos', 'add' => false,
+        ];
+    }
+
     public function beforeSave(array $data, ?Model $model): array
     {
         // A new record needs a file; an existing one keeps its current image when none is uploaded.

@@ -47,7 +47,18 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.admin', function ($view) {
-            $view->with('adminMenu', Menu::for(auth('admin')->user()));
+            $user = auth('admin')->user();
+            $view->with('adminMenu', Menu::for($user));
+            $view->with('quickLinks', array_values(array_filter([
+                $user?->can('reservations.create') ? ['New reservation', 'bi-calendar-plus', route('admin.reservations.create'), 'btn-primary'] : null,
+                $user?->can('reservations.view') ? ['Arrivals today', 'bi-box-arrow-in-right', route('admin.reservations.index', ['view' => 'arrivals']), 'btn-outline-secondary'] : null,
+                $user?->can('reservations.view') ? ['In house', 'bi-door-open', route('admin.reservations.index', ['view' => 'inhouse']), 'btn-outline-secondary'] : null,
+                $user?->can('reservations.view') ? ['Departures today', 'bi-box-arrow-right', route('admin.reservations.index', ['view' => 'departures']), 'btn-outline-secondary'] : null,
+                $user?->can('reservations.view') ? ['Advance bookings', 'bi-calendar-check', route('admin.advance.index'), 'btn-outline-secondary'] : null,
+                $user?->can('customers.view') ? ['Customers', 'bi-people', route('admin.resource.index', 'customers'), 'btn-outline-secondary'] : null,
+                $user?->can('hk-tasks.view') ? ['Room cleaning', 'bi-stars', route('admin.housekeeping.tasks'), 'btn-outline-secondary'] : null,
+                $user?->can('reports.view') ? ['Reports', 'bi-bar-chart', route('admin.reports.index'), 'btn-outline-secondary'] : null,
+            ])));
         });
     }
 }

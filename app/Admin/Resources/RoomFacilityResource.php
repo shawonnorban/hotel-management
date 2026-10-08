@@ -33,6 +33,18 @@ class RoomFacilityResource extends Resource
         ];
     }
 
+    public function grouped(): ?array
+    {
+        $types = Roomdetails::pluck('roomtype', 'roomid');
+        $facilities = Roomfacilitydetails::with('type')->get()->keyBy('facilityid');
+
+        return [
+            'key' => 'room_id', 'heading' => 'Room type', 'parent' => fn ($id) => $types[$id] ?? 'Room #'.$id,
+            'item' => fn ($row) => ['text' => $facilities[$row->facilityid]->facilitytitle ?? '?', 'sub' => $facilities[$row->facilityid]->type->facilitytypetitle ?? null],
+            'manage' => fn ($id) => route('admin.resource.edit', ['room-types', $id]).'#f_facility_ids', 'manage_label' => 'Edit facilities', 'add' => false,
+        ];
+    }
+
     public function beforeSave(array $data, ?Model $model): array
     {
         $facility = Roomfacilitydetails::find($data['facilityid']);
