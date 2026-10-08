@@ -11,6 +11,7 @@ use App\Support\Settings;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Older MySQL/MariaDB (e.g. WAMP bundles) limit index keys to 767/1000 bytes; 191 chars fits utf8mb4 everywhere.
+        Schema::defaultStringLength(191);
+
         Paginator::useBootstrapFive();
 
         // Mail server chosen in the admin screen overrides .env (skipped before the table exists, e.g. during migrate).
