@@ -12,6 +12,7 @@ use App\Http\Controllers\OnlinePaymentController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\RoomQrController;
 use App\Http\Controllers\SiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/rooms', [RoomController::class, 'index'])->name('rooms.index');
+Route::get('/room/{room}', [RoomQrController::class, 'show'])->whereNumber('room')->name('room.show');
+Route::post('/room/{room}/cleaning', [RoomQrController::class, 'requestCleaning'])->whereNumber('room')->middleware('throttle:6,1')->name('room.cleaning');
 Route::get('/rooms/{room}', [RoomController::class, 'show'])->whereNumber('room')->name('rooms.show');
 
 // Payment provider callbacks: public, verified server-side (CSRF-exempt, see bootstrap/app.php).
@@ -136,6 +139,35 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/occupancy', 'occupancy')->name('occupancy');
             Route::get('/purchases', 'purchases')->name('purchases');
             Route::get('/stock', 'stock')->name('stock');
+        });
+
+        Route::prefix('housekeeping')->name('housekeeping.')->group(function () {
+            Route::middleware('can:hk-tasks.view')->group(function () {
+                Route::get('/tasks', [Admin\Housekeeping\CleaningController::class, 'tasks'])->name('tasks');
+                Route::get('/qr', [Admin\Housekeeping\CleaningController::class, 'qrList'])->name('qr');
+            });
+            Route::middleware('can:hk-tasks.manage')->group(function () {
+                Route::get('/assign', [Admin\Housekeeping\CleaningController::class, 'assignForm'])->name('assign');
+                Route::post('/assign', [Admin\Housekeeping\CleaningController::class, 'assign'])->name('assign.store');
+                Route::post('/tasks/{task}/items/{item}', [Admin\Housekeeping\CleaningController::class, 'toggleItem'])->whereNumber(['task', 'item'])->name('tasks.item');
+                Route::post('/tasks/{task}/{action}', [Admin\Housekeeping\CleaningController::class, 'transition'])->whereNumber('task')->whereIn('action', ['start', 'complete', 'inspect', 'cancel'])->name('tasks.transition');
+            });
+            Route::get('/report', [Admin\Housekeeping\CleaningController::class, 'report'])->middleware('can:hk-tasks.view')->name('report');
+        });
+
+        Route::prefix('laundry')->name('laundry.')->group(function () {
+            Route::middleware('can:hk-laundry.manage')->group(function () {
+                Route::get('/orders/create', [Admin\Housekeeping\LaundryController::class, 'create'])->name('create');
+                Route::post('/orders', [Admin\Housekeeping\LaundryController::class, 'store'])->name('store');
+                Route::post('/orders/{order}/status', [Admin\Housekeeping\LaundryController::class, 'status'])->name('status');
+                Route::post('/orders/{order}/cancel', [Admin\Housekeeping\LaundryController::class, 'cancel'])->name('cancel');
+                Route::post('/orders/{order}/pay', [Admin\Housekeeping\LaundryController::class, 'pay'])->name('pay');
+            });
+            Route::middleware('can:hk-laundry.view')->group(function () {
+                Route::get('/orders', [Admin\Housekeeping\LaundryController::class, 'index'])->name('index');
+                Route::get('/orders/{order}', [Admin\Housekeeping\LaundryController::class, 'show'])->whereNumber('order')->name('show');
+                Route::get('/payments', [Admin\Housekeeping\LaundryController::class, 'payments'])->name('payments');
+            });
         });
 
         Route::prefix('hr')->name('hr.')->group(function () {
