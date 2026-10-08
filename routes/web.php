@@ -90,6 +90,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
             Route::put('/settings/mail', [Admin\SettingsController::class, 'updateMail'])->name('settings.mail');
             Route::post('/settings/mail-test', [Admin\SettingsController::class, 'testMail'])->name('settings.mail-test');
+            Route::get('/whatsapp/settings', [Admin\WhatsAppController::class, 'settings'])->name('whatsapp.settings');
+            Route::put('/whatsapp/settings', [Admin\WhatsAppController::class, 'update'])->name('whatsapp.update');
+            Route::get('/whatsapp/messages', [Admin\WhatsAppController::class, 'messages'])->name('whatsapp.messages');
+            Route::post('/whatsapp/messages', [Admin\WhatsAppController::class, 'send'])->name('whatsapp.send');
             Route::get('/settings/payment-gateways', [Admin\PaymentGatewayController::class, 'index'])->name('gateways.index');
             Route::put('/settings/payment-gateways/{driver}', [Admin\PaymentGatewayController::class, 'update'])->where('driver', 'stripe|paypal|sslcommerz')->name('gateways.update');
         });

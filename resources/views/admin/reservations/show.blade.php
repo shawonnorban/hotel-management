@@ -35,7 +35,8 @@
         </div></div>
 
         <div class="card mb-4"><div class="card-header d-flex align-items-center">Guests
-            @can('reservations.edit')<button class="btn btn-sm btn-outline-primary ms-auto no-print" data-bs-toggle="modal" data-bs-target="#guestModal"><i class="bi bi-person-plus me-1"></i>Add guest</button>@endcan</div>
+                        @if (! empty($wa))<a class="btn btn-sm btn-outline-success ms-auto no-print" href="{{ $wa }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp me-1"></i>WhatsApp</a>@endif
+            @can('reservations.edit')<button class="btn btn-sm btn-outline-primary {{ ! empty($wa) ? 'ms-2' : 'ms-auto' }} no-print" data-bs-toggle="modal" data-bs-target="#guestModal"><i class="bi bi-person-plus me-1"></i>Add guest</button>@endcan</div>
             <div class="table-responsive"><table class="table mb-0 align-middle"><tbody>
                 <tr><td>@if ($booking->customer?->imgguest)<img src="{{ asset($booking->customer->imgguest) }}" class="rounded" width="40" height="40" alt="">@endif</td><td>{{ trim(($booking->customer->firstname ?? '').' '.($booking->customer->lastname ?? '')) }} <span class="badge text-bg-secondary">Primary</span></td><td>{{ $booking->customer->cust_phone ?? '' }}</td><td>{{ $booking->customer->pitype ?? '' }} {{ $booking->customer->pid ?? '' }}</td><td class="text-end">@foreach (['imgfront' => 'Front', 'imgback' => 'Back'] as $c => $l)@if ($booking->customer?->$c)<a href="{{ asset($booking->customer->$c) }}" target="_blank" class="small me-2">{{ $l }}</a>@endif @endforeach</td></tr>
                 @foreach ($booking->guests as $g)

@@ -7,6 +7,9 @@ use App\Models\BookedInfo;
 use App\Models\Customerinfo;
 use App\Models\FolioCharge;
 use App\Models\TblOtherguest;
+use App\Services\WhatsAppService;
+use App\Support\AppSettings;
+use App\Support\Settings;
 use App\Support\Uploads;
 use App\Models\PaymentMethod;
 use App\Models\Promocode;
@@ -107,7 +110,23 @@ class ReservationController extends Controller
             'allMethods' => PaymentMethod::orderBy('payment_method_id')->get(),
             'roomType' => Roomdetails::find((int) explode(',', (string) $booking->roomid)[0]),
             'lines' => $this->invoices->lines($booking),
+            'wa' => $this->whatsappLink($booking),
         ]);
+    }
+
+    private function whatsappLink(BookedInfo $booking): ?string
+    {
+        $phone = $booking->customer?->cust_phone;
+        if (! $phone) {
+            return null;
+        }
+        $text = strtr((string) AppSettings::get('whatsapp.greeting', 'Hello {guest}, this is {hotel}. Regarding your booking {booking}: '), ['{guest}' => $booking->customer->firstname, '{hotel}' => Settings::hotelName(), '{booking}' => '#'.$booking->booking_number]);
+
+        try {
+            return app(WhatsAppService::class)->link($phone, $text);
+        } catch (InvalidArgumentException) {
+            return null; // phone number too short to be dialled internationally
+        }
     }
 
     public function edit(BookedInfo $booking)

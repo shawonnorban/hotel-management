@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
 class AppSettings
 {
     /** Keys whose values are encrypted at rest. */
-    private const SECRET = ['mail.password'];
+    private const SECRET = ['mail.password', 'whatsapp.token'];
 
     private static ?array $cache = null;
 

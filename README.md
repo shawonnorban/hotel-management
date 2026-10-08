@@ -58,9 +58,26 @@ payable*, *Service charge income* and *Extra services revenue* are credited. Pur
 *Accounts payable*; payroll debits *Salaries & wages* and credits *Salaries payable*, *Payroll tax payable* and
 *Staff loans*. Everything is a balanced journal entry; the trial balance and balance sheet always agree.
 
+## Modules (admin sidebar)
+
+Groups collapse; the open/closed state is remembered per browser.
+
+* **Customer** – guest records with ID (front/back) and photo, VIP flag; companions registered on each booking.
+* **Purchase manage / Units & products** – purchases, supplier returns (with return-invoice PDF), stock levels,
+  destroyed (written-off) list, units, categories, suppliers.
+* **Human resources** – full employee profile (photo, NID, documents, education, experience, emergency contact),
+  attendance, leave, loans, payroll. **Duty roster** – shifts, roster assign/list, attendance dashboard.
+* **House keeping** – cleaning tasks with checklists, printable room QR codes (guests can request cleaning),
+  laundry orders/prices/payments, reports.
+* **Transport** – flight details, vehicles, vehicle bookings (double-booking is blocked).
+* **Hall room** – halls, types, facilities, seat plans, bookings with clash check, payments posted to the ledger,
+  status board, report.
+* **WhatsApp** – click-to-chat links on reservations; optional sending through the WhatsApp Cloud API
+  (phone-number ID and access token under *WhatsApp → WhatsApp setting*; the token is stored encrypted).
+
 ## Roles
 
-*Super Admin* (everything), *Manager*, *Front Desk*, *Accountant*, *HR Manager*, *Store Keeper* are created by the
+*Super Admin* (everything), *Manager*, *Front Desk*, *Accountant*, *HR Manager*, *Store Keeper*, *Housekeeping* are created by the
 seeder. Edit them or create your own under *Administration → Roles & permissions*.
 
 ## Online payments
