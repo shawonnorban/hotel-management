@@ -122,6 +122,12 @@ class ResourceController extends Controller
         return array_values(array_filter($res->fields(), fn (Field $f) => ! $f->listOnly));
     }
 
+    /** Fields that carry data (headings do not). */
+    private function dataFields(Resource $res): array
+    {
+        return array_values(array_filter($this->formFields($res), fn (Field $f) => $f->type !== 'heading'));
+    }
+
     private function resolve(string $slug, string $ability): Resource
     {
         $res = ResourceRegistry::find($slug);
@@ -145,7 +151,7 @@ class ResourceController extends Controller
     {
         $table = $res->modelInstance()->getTable();
         $rules = [];
-        foreach ($this->formFields($res) as $field) {
+        foreach ($this->dataFields($res) as $field) {
             $rules[$field->name] = $field->validationRules($model, $table);
             if ($field->type === 'multiselect') {
                 $rules[$field->name.'.*'] = [Rule::in(array_keys($field->resolveOptions()))];
@@ -159,7 +165,7 @@ class ResourceController extends Controller
         $validated = $request->validate($rules);
         $data = [];
 
-        foreach ($this->formFields($res) as $field) {
+        foreach ($this->dataFields($res) as $field) {
             $name = $field->name;
 
             if ($field->type === 'image') {
@@ -200,7 +206,7 @@ class ResourceController extends Controller
 
     private function exportCsv(Resource $res, $query): StreamedResponse
     {
-        $fields = collect($res->fields())->reject(fn (Field $f) => in_array($f->type, ['password', 'image'], true));
+        $fields = collect($res->fields())->reject(fn (Field $f) => in_array($f->type, ['password', 'image', 'heading'], true));
 
         return response()->streamDownload(function () use ($query, $fields) {
             $out = fopen('php://output', 'w');

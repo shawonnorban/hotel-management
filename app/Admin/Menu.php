@@ -12,7 +12,7 @@ class Menu
      * Resource screens are added automatically from the registry.
      */
     private const SCREENS = [
-        ['Overview', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
+        ['Dashboard', 'Dashboard', 'bi-speedometer2', 'admin.dashboard', 'dashboard.view'],
         ['Front desk', 'Reservations', 'bi-calendar-check', 'admin.reservations.index', 'reservations.view'],
         ['Administration', 'Backups', 'bi-database', 'admin.backups.index', 'backup.manage'],
         ['Administration', 'Roles & permissions', 'bi-shield-lock', 'admin.roles.index', 'roles.manage'],
@@ -23,8 +23,8 @@ class Menu
         ['Human resources', 'Leave', 'bi-calendar2-minus', 'admin.hr.leave.index', 'hr-leave.manage'],
         ['Human resources', 'Staff loans', 'bi-cash-coin', 'admin.hr.loans.index', 'hr-loans.manage'],
         ['Human resources', 'Payroll', 'bi-cash-stack', 'admin.hr.payroll.index', 'hr-payroll.view'],
-        ['Purchasing', 'Purchases', 'bi-cart-check', 'admin.purchases.index', 'purchases.view'],
-        ['Purchasing', 'Stock levels', 'bi-boxes', 'admin.stock.index', 'stock.view'],
+        ['Purchase manage', 'Purchases', 'bi-cart-check', 'admin.purchases.index', 'purchases.view'],
+        ['Units & products', 'Stock levels', 'bi-boxes', 'admin.stock.index', 'stock.view'],
         ['Accounting', 'Vouchers', 'bi-journal-text', 'admin.vouchers.index', 'accounts.view'],
         ['Accounting', 'Account ledger', 'bi-book', 'admin.accounting.ledger', 'accounts.view'],
         ['Accounting', 'Cash & bank book', 'bi-wallet2', 'admin.accounting.cash-book', 'accounts.view'],
@@ -34,7 +34,7 @@ class Menu
     ];
 
     /** Order in which groups appear in the sidebar. */
-    private const GROUP_ORDER = ['Overview', 'Front desk', 'Hotel setup', 'Guests & sales', 'Accounting', 'Purchasing', 'Human resources', 'Reports', 'Website', 'Administration'];
+    private const GROUP_ORDER = ['Dashboard', 'Front desk', 'Customer', 'Hotel setup', 'Purchase manage', 'Units & products', 'House keeping', 'Duty roster', 'Transport', 'Hall room', 'Human resources', 'Accounting', 'Reports', 'WhatsApp', 'Website', 'Administration'];
 
     /** @var list<array{0:string,1:string,2:string,3:string,4:?string}> */
     private static array $extra = [];

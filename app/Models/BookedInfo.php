@@ -72,6 +72,11 @@ class BookedInfo extends Model
         return $this->hasMany(TblGuestpayments::class, 'bookedid', 'bookedid')->orderBy('payid');
     }
 
+    public function guests()
+    {
+        return $this->hasMany(TblOtherguest::class, 'booking_id', 'bookedid')->orderBy('otherguest_id');
+    }
+
     public function charges()
     {
         return $this->hasMany(FolioCharge::class, 'bookedid', 'bookedid')->orderBy('id');

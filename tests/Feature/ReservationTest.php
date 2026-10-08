@@ -12,7 +12,9 @@ use App\Models\TblRoomOffer;
 use App\Models\User;
 use App\Services\LedgerService;
 use Database\Seeders\ChartOfAccountsSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 
 class ReservationTest extends HotelTestCase
@@ -61,6 +63,27 @@ class ReservationTest extends HotelTestCase
         $this->assertSame(100.0, $this->ledger->balance('cash'));
         $this->assertSame(100.0, $this->ledger->balance('guest_deposits'));
         $this->assertEqualsCanonicalizing(['created', 'payment'], $booking->events->pluck('event')->all());
+    }
+
+    public function test_new_guest_id_photos_and_additional_guests_are_stored(): void
+    {
+        Storage::fake('public');
+        $this->post('/admin/reservations', array_merge($this->stay(0, 2), [
+            'room' => $this->room->roomid, 'rooms' => 1, 'adults' => 2, 'source' => 'walk-in',
+            'new_firstname' => 'Photo', 'new_phone' => '0177777777', 'new_id_type' => 'NID', 'new_id_no' => '123456',
+            'new_front' => UploadedFile::fake()->image('f.jpg'), 'new_back' => UploadedFile::fake()->image('b.jpg'), 'new_photo' => UploadedFile::fake()->image('p.jpg'),
+            'guests' => [['name' => 'Companion', 'gender' => 'Female', 'id_type' => 'Passport', 'id_no' => 'P1', 'front' => UploadedFile::fake()->image('cf.jpg')]],
+        ]))->assertSessionHasNoErrors();
+
+        $booking = BookedInfo::firstOrFail();
+        $this->assertNotNull($booking->customer->imgfront);
+        $this->assertNotNull($booking->customer->imgguest);
+        $this->assertCount(1, $booking->guests);
+        $this->assertNotNull($booking->guests->first()->front_image);
+
+        $this->get('/admin/reservations/'.$booking->booking_number)->assertOk()->assertSee('Companion');
+        $this->delete('/admin/reservations/'.$booking->booking_number.'/guests/'.$booking->guests->first()->getKey())->assertRedirect();
+        $this->assertCount(0, $booking->fresh()->guests);
     }
 
     public function test_new_guest_needs_contact_details_and_unique_phone(): void

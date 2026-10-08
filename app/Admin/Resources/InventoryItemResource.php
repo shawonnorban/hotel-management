@@ -21,7 +21,7 @@ class InventoryItemResource extends Resource
 
     public static string $icon = 'bi-box-seam';
 
-    public static string $group = 'Purchasing';
+    public static string $group = 'Units & products';
 
     public function with(): array
     {

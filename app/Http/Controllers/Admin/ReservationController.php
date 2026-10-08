@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\BookedInfo;
 use App\Models\Customerinfo;
 use App\Models\FolioCharge;
+use App\Models\TblOtherguest;
+use App\Support\Uploads;
 use App\Models\PaymentMethod;
 use App\Models\Promocode;
 use App\Models\Roomdetails;
@@ -87,6 +89,7 @@ class ReservationController extends Controller
                 $data['guest_name'] ?? null, $data['special'] ?? null, $promo, $data['source'], auth('admin')->id(),
                 isset($data['deposit']) ? (float) $data['deposit'] : null, $method,
             );
+            $this->saveGuests($request, $booking);
         } catch (InvalidArgumentException|RuntimeException $e) {
             return back()->withInput()->withErrors(['booking' => $e->getMessage()]);
         }
@@ -96,7 +99,7 @@ class ReservationController extends Controller
 
     public function show(BookedInfo $booking)
     {
-        $booking->load('customer', 'payments', 'charges', 'events.user');
+        $booking->load('customer', 'payments', 'charges', 'events.user', 'guests');
 
         return view('admin.reservations.show', [
             'booking' => $booking,
@@ -219,6 +222,26 @@ class ReservationController extends Controller
         return $this->act(fn () => $this->reservations->removeCharge($charge, auth('admin')->id()), 'Charge removed.', $booking);
     }
 
+    public function addGuest(Request $request, BookedInfo $booking)
+    {
+        $request->validate($this->guestRules('guest.'), [], $this->guestAttributes('guest.'));
+        $files = $request->allFiles()['guest'] ?? [];
+        $this->storeGuest($booking, $request->input('guest', []), $files);
+
+        return redirect()->route('admin.reservations.show', $booking->booking_number)->with('status', 'Guest added to the booking.');
+    }
+
+    public function removeGuest(BookedInfo $booking, TblOtherguest $guest)
+    {
+        abort_unless((int) $guest->booking_id === (int) $booking->bookedid, 404);
+        foreach (['front_image', 'back_image', 'occupant_image'] as $column) {
+            Uploads::delete($guest->{$column});
+        }
+        $guest->delete();
+
+        return redirect()->route('admin.reservations.show', $booking->booking_number)->with('status', 'Guest removed.');
+    }
+
     public function invoice(BookedInfo $booking)
     {
         return $this->invoices->pdf($booking)->stream('invoice-'.$booking->booking_number.'.pdf');
@@ -264,14 +287,35 @@ class ReservationController extends Controller
         if ($creating) {
             $rules += [
                 'guest_id' => ['nullable', 'integer', 'exists:customerinfo,customerid'],
+                'new_title' => ['nullable', 'string', 'max:20'],
                 'new_firstname' => ['required_without:guest_id', 'nullable', 'string', 'max:100'],
                 'new_lastname' => ['nullable', 'string', 'max:100'],
+                'new_fathername' => ['nullable', 'string', 'max:150'],
+                'new_gender' => ['nullable', 'in:Male,Female,Other'],
+                'new_profession' => ['nullable', 'string', 'max:100'],
+                'new_dob' => ['nullable', 'date'],
+                'new_anniversary' => ['nullable', 'date'],
+                'new_nationality' => ['nullable', 'string', 'max:100'],
+                'new_is_vip' => ['nullable', 'boolean'],
+                'new_country_code' => ['nullable', 'string', 'max:10'],
                 'new_email' => ['nullable', 'email', 'max:255', 'unique:customerinfo,email'],
                 'new_phone' => ['required_without:guest_id', 'nullable', 'string', 'max:30', 'unique:customerinfo,cust_phone'],
+                'new_country' => ['nullable', 'string', 'max:100'],
+                'new_state' => ['nullable', 'string', 'max:100'],
+                'new_city' => ['nullable', 'string', 'max:100'],
+                'new_zipcode' => ['nullable', 'string', 'max:100'],
+                'new_address' => ['nullable', 'string', 'max:255'],
+                'new_id_type' => ['nullable', 'string', 'max:40'],
+                'new_id_no' => ['nullable', 'string', 'max:100'],
+                'new_comments' => ['nullable', 'string', 'max:1000'],
+                'new_front' => ['nullable', 'image', 'max:4096'],
+                'new_back' => ['nullable', 'image', 'max:4096'],
+                'new_photo' => ['nullable', 'image', 'max:4096'],
                 'source' => ['required', 'in:'.implode(',', array_keys(self::SOURCES))],
                 'deposit' => ['nullable', 'numeric', 'gt:0'],
                 'deposit_method' => ['nullable', 'required_with:deposit', 'integer', 'exists:payment_method,payment_method_id'],
-            ];
+                'guests' => ['nullable', 'array', 'max:30'],
+            ] + $this->guestRules('guests.*.');
         }
 
         return $request->validate($rules);
@@ -283,11 +327,32 @@ class ReservationController extends Controller
             return Customerinfo::findOrFail($data['guest_id']);
         }
 
+        $request = request();
         $guest = Customerinfo::create([
+            'title' => $data['new_title'] ?? null,
+            'country_code' => $data['new_country_code'] ?? null,
             'firstname' => $data['new_firstname'],
             'lastname' => $data['new_lastname'] ?? '',
+            'fathername' => $data['new_fathername'] ?? null,
+            'gender' => $data['new_gender'] ?? null,
+            'profession' => $data['new_profession'] ?? null,
+            'dob' => $data['new_dob'] ?? null,
+            'anniversary' => $data['new_anniversary'] ?? null,
+            'nationality' => $data['new_nationality'] ?? null,
+            'is_vip' => ! empty($data['new_is_vip']),
             'email' => ! empty($data['new_email']) ? strtolower($data['new_email']) : null,
             'cust_phone' => $data['new_phone'],
+            'country' => $data['new_country'] ?? null,
+            'state' => $data['new_state'] ?? null,
+            'city' => $data['new_city'] ?? null,
+            'zipcode' => $data['new_zipcode'] ?? null,
+            'address' => $data['new_address'] ?? null,
+            'pitype' => $data['new_id_type'] ?? null,
+            'pid' => $data['new_id_no'] ?? null,
+            'comments' => $data['new_comments'] ?? null,
+            'imgfront' => Uploads::store($request->file('new_front'), 'customers'),
+            'imgback' => Uploads::store($request->file('new_back'), 'customers'),
+            'imgguest' => Uploads::store($request->file('new_photo'), 'customers'),
             'balance' => 0,
             'active' => 1,
             'signupdate' => today()->toDateString(),
@@ -295,6 +360,59 @@ class ReservationController extends Controller
         $guest->update(['customernumber' => str_pad((string) $guest->customerid, 4, '0', STR_PAD_LEFT)]);
 
         return $guest;
+    }
+
+    /** @return array<string,list<string>> */
+    private function guestRules(string $prefix): array
+    {
+        return [
+            $prefix.'name' => ['nullable', 'string', 'max:150'],
+            $prefix.'gender' => ['nullable', 'in:Male,Female,Other'],
+            $prefix.'mobile' => ['nullable', 'string', 'max:30'],
+            $prefix.'email' => ['nullable', 'email', 'max:150'],
+            $prefix.'id_type' => ['nullable', 'string', 'max:40'],
+            $prefix.'id_no' => ['nullable', 'string', 'max:100'],
+            $prefix.'front' => ['nullable', 'image', 'max:4096'],
+            $prefix.'back' => ['nullable', 'image', 'max:4096'],
+            $prefix.'photo' => ['nullable', 'image', 'max:4096'],
+        ];
+    }
+
+    private function guestAttributes(string $prefix): array
+    {
+        return [$prefix.'name' => 'guest name', $prefix.'front' => 'ID front image', $prefix.'back' => 'ID back image', $prefix.'photo' => 'guest photo'];
+    }
+
+    /** Save the "additional guests" repeater of the booking form. */
+    private function saveGuests(Request $request, BookedInfo $booking): void
+    {
+        $files = $request->allFiles()['guests'] ?? [];
+        foreach ((array) $request->input('guests', []) as $i => $row) {
+            $this->storeGuest($booking, $row, $files[$i] ?? []);
+        }
+    }
+
+    private function storeGuest(BookedInfo $booking, array $row, array $files): void
+    {
+        if (blank($row['name'] ?? null)) {
+            return;
+        }
+
+        TblOtherguest::create([
+            'bookedid' => (string) $booking->bookedid,
+            'booking_id' => $booking->bookedid,
+            'customerid' => $booking->cutomerid,
+            'guestname' => $row['name'],
+            'gender' => $row['gender'] ?? null,
+            'mobile' => $row['mobile'] ?? null,
+            'email' => $row['email'] ?? null,
+            'photo_id_type' => $row['id_type'] ?? null,
+            'photo_id' => $row['id_no'] ?? null,
+            'front_image' => Uploads::store($files['front'] ?? null, 'guests'),
+            'back_image' => Uploads::store($files['back'] ?? null, 'guests'),
+            'occupant_image' => Uploads::store($files['photo'] ?? null, 'guests'),
+            'type' => 0,
+        ]);
     }
 
     private function promo(array $data, Roomdetails $room, Carbon $checkin, ?BookedInfo $booking = null)

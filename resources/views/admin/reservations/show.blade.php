@@ -34,6 +34,17 @@
             @if ($booking->special_request)<hr><div class="small text-body-secondary">Special requests</div><div>{{ $booking->special_request }}</div>@endif
         </div></div>
 
+        <div class="card mb-4"><div class="card-header d-flex align-items-center">Guests
+            @can('reservations.edit')<button class="btn btn-sm btn-outline-primary ms-auto no-print" data-bs-toggle="modal" data-bs-target="#guestModal"><i class="bi bi-person-plus me-1"></i>Add guest</button>@endcan</div>
+            <div class="table-responsive"><table class="table mb-0 align-middle"><tbody>
+                <tr><td>@if ($booking->customer?->imgguest)<img src="{{ asset($booking->customer->imgguest) }}" class="rounded" width="40" height="40" alt="">@endif</td><td>{{ trim(($booking->customer->firstname ?? '').' '.($booking->customer->lastname ?? '')) }} <span class="badge text-bg-secondary">Primary</span></td><td>{{ $booking->customer->cust_phone ?? '' }}</td><td>{{ $booking->customer->pitype ?? '' }} {{ $booking->customer->pid ?? '' }}</td><td class="text-end">@foreach (['imgfront' => 'Front', 'imgback' => 'Back'] as $c => $l)@if ($booking->customer?->$c)<a href="{{ asset($booking->customer->$c) }}" target="_blank" class="small me-2">{{ $l }}</a>@endif @endforeach</td></tr>
+                @foreach ($booking->guests as $g)
+                <tr><td>@if ($g->occupant_image)<img src="{{ asset($g->occupant_image) }}" class="rounded" width="40" height="40" alt="">@endif</td><td>{{ $g->guestname }} <span class="small text-body-secondary">{{ $g->gender }}</span></td><td>{{ $g->mobile }}</td><td>{{ $g->photo_id_type }} {{ $g->photo_id }}</td>
+                    <td class="text-end">@if ($g->front_image)<a href="{{ asset($g->front_image) }}" target="_blank" class="small me-2">Front</a>@endif @if ($g->back_image)<a href="{{ asset($g->back_image) }}" target="_blank" class="small me-2">Back</a>@endif
+                        @can('reservations.edit')<form method="post" action="{{ route('admin.reservations.guests.destroy', [$booking->booking_number, $g]) }}" class="d-inline no-print" data-confirm="Remove this guest?">@csrf @method('DELETE')<button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x-lg"></i></button></form>@endcan</td></tr>
+                @endforeach
+            </tbody></table></div></div>
+
         <div class="card mb-4"><div class="card-header d-flex align-items-center">Bill
             @can('reservations.edit')@if (in_array($status, ['0', '2', '4']))<button class="btn btn-sm btn-outline-primary ms-auto no-print" data-bs-toggle="modal" data-bs-target="#chargeModal"><i class="bi bi-plus-lg me-1"></i>Add charge</button>@endif @endcan</div>
             <div class="table-responsive"><table class="table mb-0">
@@ -94,6 +105,22 @@
         <div class="col-12"><label class="form-label small fw-semibold">Reason</label><input name="reason" class="form-control" maxlength="150"></div>
     </div>
     <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button><button class="btn btn-danger">Refund</button></div></form></div></div>
+@endcan
+@can('reservations.edit')
+<div class="modal fade" id="guestModal" tabindex="-1"><div class="modal-dialog modal-lg"><form method="post" enctype="multipart/form-data" action="{{ route('admin.reservations.guests.store', $booking->booking_number) }}" class="modal-content">@csrf
+    <div class="modal-header"><h5 class="modal-title">Add guest</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body row g-2">
+        <div class="col-md-6"><input name="guest[name]" class="form-control" placeholder="Full name" required></div>
+        <div class="col-md-3"><select name="guest[gender]" class="form-select"><option value="">Gender</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+        <div class="col-md-3"><input name="guest[mobile]" class="form-control" placeholder="Mobile"></div>
+        <div class="col-md-6"><input type="email" name="guest[email]" class="form-control" placeholder="Email"></div>
+        <div class="col-md-3"><select name="guest[id_type]" class="form-select"><option value="">ID type</option><option>NID</option><option>Passport</option><option>Driving licence</option><option>Other</option></select></div>
+        <div class="col-md-3"><input name="guest[id_no]" class="form-control" placeholder="ID number"></div>
+        <div class="col-md-4"><label class="small">ID front</label><input type="file" name="guest[front]" class="form-control" accept="image/*"></div>
+        <div class="col-md-4"><label class="small">ID back</label><input type="file" name="guest[back]" class="form-control" accept="image/*"></div>
+        <div class="col-md-4"><label class="small">Guest photo</label><input type="file" name="guest[photo]" class="form-control" accept="image/*"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button><button class="btn btn-primary">Add</button></div></form></div></div>
 @endcan
 @can('reservations.edit')
 <div class="modal fade" id="chargeModal" tabindex="-1"><div class="modal-dialog"><form method="post" action="{{ route('admin.reservations.charges.store', $booking->booking_number) }}" class="modal-content">@csrf

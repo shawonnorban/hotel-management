@@ -17,6 +17,18 @@
         if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target) && !e.target.closest('[data-sidebar-toggle]')) { sidebar.classList.remove('open'); }
     });
 
+    // Sidebar groups: remember which ones the user opened or closed ----------
+    document.querySelectorAll('.group-toggle').forEach(function (btn) {
+        var id = btn.dataset.group, target = document.querySelector(btn.dataset.bsTarget), key = 'sb:' + id;
+        var hasActive = target.querySelector('.nav-link.active');
+        try {
+            var saved = localStorage.getItem(key);
+            if (!hasActive && saved === '1') { target.classList.add('show'); btn.classList.remove('collapsed'); btn.setAttribute('aria-expanded', 'true'); }
+        } catch (e) {}
+        target.addEventListener('shown.bs.collapse', function () { try { localStorage.setItem(key, '1'); } catch (e) {} });
+        target.addEventListener('hidden.bs.collapse', function () { try { localStorage.setItem(key, '0'); } catch (e) {} });
+    });
+
     // Confirm destructive actions -----------------------------------------
     document.addEventListener('submit', function (e) {
         var msg = e.target.getAttribute('data-confirm');

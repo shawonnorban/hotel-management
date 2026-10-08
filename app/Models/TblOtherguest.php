@@ -13,4 +13,9 @@ class TblOtherguest extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    public function booking()
+    {
+        return $this->belongsTo(BookedInfo::class, 'booking_id', 'bookedid');
+    }
 }

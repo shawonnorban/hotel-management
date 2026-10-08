@@ -12,12 +12,22 @@
             <span class="text-truncate">{{ $hotelName }}</span>
         </a>
         @foreach ($adminMenu as $group => $items)
-            <div class="group">{{ $group }}</div>
-            <nav class="nav flex-column">
-                @foreach ($items as $item)
-                    <a class="nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['url'] }}"><i class="bi {{ $item['icon'] }}"></i><span>{{ $item['label'] }}</span></a>
-                @endforeach
-            </nav>
+            @php($gid = 'g_'.\Illuminate\Support\Str::slug($group, '_'))
+            @php($hasActive = collect($items)->contains('active', true))
+            @if (count($items) === 1 && $group === 'Dashboard')
+                <nav class="nav flex-column mt-2"><a class="nav-link {{ $items[0]['active'] ? 'active' : '' }}" href="{{ $items[0]['url'] }}"><i class="bi {{ $items[0]['icon'] }}"></i><span>{{ $items[0]['label'] }}</span></a></nav>
+            @else
+                <button type="button" class="group group-toggle {{ $hasActive ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#{{ $gid }}" data-group="{{ $gid }}" aria-expanded="{{ $hasActive ? 'true' : 'false' }}">
+                    <span>{{ $group }}</span><i class="bi bi-chevron-down caret"></i>
+                </button>
+                <div id="{{ $gid }}" class="collapse {{ $hasActive ? 'show' : '' }}">
+                    <nav class="nav flex-column">
+                        @foreach ($items as $item)
+                            <a class="nav-link {{ $item['active'] ? 'active' : '' }}" href="{{ $item['url'] }}"><i class="bi {{ $item['icon'] }}"></i><span>{{ $item['label'] }}</span></a>
+                        @endforeach
+                    </nav>
+                </div>
+            @endif
         @endforeach
         <div class="mt-auto p-3 small text-center" style="color:#5f7584">v{{ config('hotel.version') }}</div>
     </aside>

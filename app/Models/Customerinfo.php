@@ -19,6 +19,11 @@ class Customerinfo extends Authenticatable
 
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return ['is_vip' => 'boolean'];
+    }
+
     protected $hidden = ['pass', 'password_reset_token'];
 
     public function getAuthPassword(): string

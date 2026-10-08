@@ -20,7 +20,7 @@ class UnitResource extends Resource
 
     public static string $icon = 'bi-rulers';
 
-    public static string $group = 'Purchasing';
+    public static string $group = 'Units & products';
 
     public function fields(): array
     {

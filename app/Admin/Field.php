@@ -52,6 +52,16 @@ class Field
         return $field;
     }
 
+    /** A section heading inside the form (not a data field). */
+    public static function heading(string $label): static
+    {
+        $field = static::make('heading_'.\Illuminate\Support\Str::slug($label, '_'), $label, 'heading');
+        $field->col = 12;
+        $field->virtual = true;
+
+        return $field;
+    }
+
     public static function text(string $name, string $label): static
     {
         return static::make($name, $label);

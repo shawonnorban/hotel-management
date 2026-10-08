@@ -107,6 +107,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::put('/{booking}', 'update')->name('update');
                 Route::post('/{booking}/charges', 'storeCharge')->name('charges.store');
                 Route::delete('/{booking}/charges/{charge}', 'destroyCharge')->name('charges.destroy');
+                Route::post('/{booking}/guests', 'addGuest')->name('guests.store');
+                Route::delete('/{booking}/guests/{guest}', 'removeGuest')->name('guests.destroy');
             });
             Route::middleware('can:reservations.status')->group(function () {
                 Route::post('/{booking}/confirm', 'confirm')->name('confirm');

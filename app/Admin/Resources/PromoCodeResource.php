@@ -20,7 +20,7 @@ class PromoCodeResource extends Resource
 
     public static string $icon = 'bi-ticket-perforated';
 
-    public static string $group = 'Guests & sales';
+    public static string $group = 'Customer';
 
     public function fields(): array
     {

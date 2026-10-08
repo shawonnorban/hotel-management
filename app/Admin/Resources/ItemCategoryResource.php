@@ -20,7 +20,7 @@ class ItemCategoryResource extends Resource
 
     public static string $icon = 'bi-tags';
 
-    public static string $group = 'Purchasing';
+    public static string $group = 'Units & products';
 
     public function fields(): array
     {

@@ -1,3 +1,6 @@
+@if ($field->type === 'heading')
+    <h2 class="h6 text-uppercase text-body-secondary border-bottom pb-2 mb-0 mt-2" style="letter-spacing:.06em">{{ $field->label }}</h2>
+@else
 @php
     $name = $field->name;
     $value = old($name, $record ? ($field->valueFrom ? ($field->valueFrom)($record) : $record->getAttribute($name)) : $field->default);
@@ -61,4 +64,6 @@
     @endswitch
     @error($name)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
     @if ($field->help)<div class="form-text">{{ $field->help }}</div>@endif
+@endif
+
 @endif

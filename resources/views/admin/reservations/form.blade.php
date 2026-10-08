@@ -12,7 +12,7 @@
 @endphp
 <a href="{{ $editing ? route('admin.reservations.show', $booking->booking_number) : route('admin.reservations.index') }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> {{ $editing ? '#'.$booking->booking_number : 'Reservations' }}</a>
 <h1 class="page-title mt-1 mb-4">{{ $editing ? 'Edit reservation #'.$booking->booking_number : 'New reservation' }}</h1>
-<form method="post" action="{{ $editing ? route('admin.reservations.update', $booking->booking_number) : route('admin.reservations.store') }}" id="resForm">
+<form method="post" action="{{ $editing ? route('admin.reservations.update', $booking->booking_number) : route('admin.reservations.store') }}" id="resForm" enctype="multipart/form-data">
     @csrf @if ($editing) @method('PUT') @endif
     <div class="row g-4">
         <div class="col-lg-8">
@@ -21,12 +21,48 @@
                 <div class="mb-3"><label class="form-label small fw-semibold">Existing guest</label>
                     <select name="guest_id" id="guest_id" class="form-select" data-search><option value="">— New guest —</option>@foreach ($guests as $g)<option value="{{ $g->customerid }}" @selected((string) $val('guest_id') === (string) $g->customerid)>{{ trim($g->firstname.' '.$g->lastname) }} · {{ $g->cust_phone }}{{ $g->email ? ' · '.$g->email : '' }}</option>@endforeach</select></div>
                 <div class="row g-3" id="newGuest">
-                    <div class="col-md-6"><label class="form-label small fw-semibold">First name</label><input name="new_firstname" class="form-control" value="{{ old('new_firstname') }}"></div>
-                    <div class="col-md-6"><label class="form-label small fw-semibold">Last name</label><input name="new_lastname" class="form-control" value="{{ old('new_lastname') }}"></div>
-                    <div class="col-md-6"><label class="form-label small fw-semibold">Phone</label><input name="new_phone" class="form-control" value="{{ old('new_phone') }}"></div>
-                    <div class="col-md-6"><label class="form-label small fw-semibold">Email (optional)</label><input type="email" name="new_email" class="form-control" value="{{ old('new_email') }}"></div>
+                    <div class="col-md-2"><label class="form-label small fw-semibold">Title</label><select name="new_title" class="form-select"><option value="">—</option><option>Mr</option><option>Mrs</option><option>Ms</option><option>Dr</option></select></div>
+                    <div class="col-md-5"><label class="form-label small fw-semibold">First name</label><input type="text" name="new_firstname" class="form-control" value="{{ old('new_firstname') }}" ></div>
+                    <div class="col-md-5"><label class="form-label small fw-semibold">Last name</label><input type="text" name="new_lastname" class="form-control" value="{{ old('new_lastname') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Phone</label><input type="text" name="new_phone" class="form-control" value="{{ old('new_phone') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Email (optional)</label><input type="email" name="new_email" class="form-control" value="{{ old('new_email') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Gender</label><select name="new_gender" class="form-select"><option value="">—</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Father / spouse name</label><input type="text" name="new_fathername" class="form-control" value="{{ old('new_fathername') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Occupation</label><input type="text" name="new_profession" class="form-control" value="{{ old('new_profession') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Nationality</label><input type="text" name="new_nationality" class="form-control" value="{{ old('new_nationality') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Date of birth</label><input type="text" name="new_dob" class="form-control" value="{{ old('new_dob') }}" data-date autocomplete="off"></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Anniversary</label><input type="text" name="new_anniversary" class="form-control" value="{{ old('new_anniversary') }}" data-date autocomplete="off"></div>
+                    <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" name="new_is_vip" value="1" id="new_is_vip"><label class="form-check-label" for="new_is_vip">VIP guest</label></div></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Country</label><input type="text" name="new_country" class="form-control" value="{{ old('new_country') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">State</label><input type="text" name="new_state" class="form-control" value="{{ old('new_state') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">City</label><input type="text" name="new_city" class="form-control" value="{{ old('new_city') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Zip code</label><input type="text" name="new_zipcode" class="form-control" value="{{ old('new_zipcode') }}" ></div>
+                    <div class="col-md-8"><label class="form-label small fw-semibold">Address</label><input type="text" name="new_address" class="form-control" value="{{ old('new_address') }}" ></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">ID type</label><select name="new_id_type" class="form-select"><option value="">—</option><option>NID</option><option>Passport</option><option>Driving licence</option><option>Other</option></select></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">ID number</label><input type="text" name="new_id_no" class="form-control" value="{{ old('new_id_no') }}" ></div>
+                    <div class="col-md-4"></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">ID photo — front</label><input type="file" name="new_front" class="form-control" accept="image/*"></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">ID photo — back</label><input type="file" name="new_back" class="form-control" accept="image/*"></div>
+                    <div class="col-md-4"><label class="form-label small fw-semibold">Guest photo</label><input type="file" name="new_photo" class="form-control" accept="image/*"></div>
+                    <div class="col-12"><label class="form-label small fw-semibold">Notes</label><textarea name="new_comments" class="form-control" rows="2">{{ old('new_comments') }}</textarea></div>
                 </div>
             </div></div>
+            @endunless
+            @unless ($editing)
+            <div class="card mb-4"><div class="card-header d-flex align-items-center">Additional guests <button type="button" class="btn btn-sm btn-outline-primary ms-auto" id="addGuestRow"><i class="bi bi-plus-lg me-1"></i>Add guest</button></div>
+                <div class="card-body" id="guestRows"><p class="small text-body-secondary mb-0" id="guestHint">Add everyone staying besides the main guest, with their ID and photo.</p></div></div>
+            <template id="guestTpl"><div class="border rounded p-3 mb-3 guest-row"><div class="row g-2">
+                <div class="col-md-5"><input name="guests[__i__][name]" class="form-control" placeholder="Full name"></div>
+                <div class="col-md-3"><select name="guests[__i__][gender]" class="form-select"><option value="">Gender</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+                <div class="col-md-3"><input name="guests[__i__][mobile]" class="form-control" placeholder="Mobile"></div>
+                <div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger rm-guest"><i class="bi bi-trash"></i></button></div>
+                <div class="col-md-5"><input type="email" name="guests[__i__][email]" class="form-control" placeholder="Email"></div>
+                <div class="col-md-3"><select name="guests[__i__][id_type]" class="form-select"><option value="">ID type</option><option>NID</option><option>Passport</option><option>Driving licence</option><option>Other</option></select></div>
+                <div class="col-md-4"><input name="guests[__i__][id_no]" class="form-control" placeholder="ID number"></div>
+                <div class="col-md-4"><label class="small text-body-secondary">ID front</label><input type="file" name="guests[__i__][front]" class="form-control" accept="image/*"></div>
+                <div class="col-md-4"><label class="small text-body-secondary">ID back</label><input type="file" name="guests[__i__][back]" class="form-control" accept="image/*"></div>
+                <div class="col-md-4"><label class="small text-body-secondary">Guest photo</label><input type="file" name="guests[__i__][photo]" class="form-control" accept="image/*"></div>
+            </div></div></template>
             @endunless
             <div class="card mb-4"><div class="card-header">Stay</div><div class="card-body row g-3">
                 <div class="col-md-6"><label class="form-label small fw-semibold">Room type</label>
@@ -57,6 +93,14 @@
 @push('scripts')
 <script>
 (function () {
+    var rows = document.getElementById('guestRows'), tpl = document.getElementById('guestTpl'), gi = 0;
+    if (rows && tpl) {
+        document.getElementById('addGuestRow').addEventListener('click', function () {
+            var h = document.getElementById('guestHint'); if (h) h.remove();
+            rows.insertAdjacentHTML('beforeend', tpl.innerHTML.replace(/__i__/g, gi++));
+        });
+        rows.addEventListener('click', function (e) { var b = e.target.closest('.rm-guest'); if (b) b.closest('.guest-row').remove(); });
+    }
     var box = document.getElementById('quoteBox'), guest = document.getElementById('guest_id'), timer;
     var fields = ['room', 'checkin', 'checkout', 'rooms', 'promo'];
     function money(v) { return Number(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }

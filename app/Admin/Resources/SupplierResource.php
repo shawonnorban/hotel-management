@@ -20,7 +20,7 @@ class SupplierResource extends Resource
 
     public static string $icon = 'bi-truck';
 
-    public static string $group = 'Purchasing';
+    public static string $group = 'Units & products';
 
     public function searchable(): array
     {
