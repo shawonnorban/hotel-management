@@ -155,6 +155,21 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/report', [Admin\Housekeeping\CleaningController::class, 'report'])->middleware('can:hk-tasks.view')->name('report');
         });
 
+        Route::prefix('hall')->group(function () {
+            Route::middleware('can:hall-bookings.manage')->group(function () {
+                Route::get('/bookings/create', [Admin\Hall\HallBookingController::class, 'create'])->name('hall-bookings.create');
+                Route::post('/bookings', [Admin\Hall\HallBookingController::class, 'store'])->name('hall-bookings.store');
+                Route::post('/bookings/{booking}/status', [Admin\Hall\HallBookingController::class, 'status'])->name('hall-bookings.status');
+                Route::post('/bookings/{booking}/pay', [Admin\Hall\HallBookingController::class, 'pay'])->name('hall-bookings.pay');
+            });
+            Route::middleware('can:hall-bookings.view')->group(function () {
+                Route::get('/bookings', [Admin\Hall\HallBookingController::class, 'index'])->name('hall-bookings.index');
+                Route::get('/bookings/{booking}', [Admin\Hall\HallBookingController::class, 'show'])->whereNumber('booking')->name('hall-bookings.show');
+                Route::get('/status', [Admin\Hall\HallBookingController::class, 'board'])->name('hall-bookings.board');
+                Route::get('/report', [Admin\Hall\HallBookingController::class, 'report'])->name('hall-bookings.report');
+            });
+        });
+
         Route::prefix('laundry')->name('laundry.')->group(function () {
             Route::middleware('can:hk-laundry.manage')->group(function () {
                 Route::get('/orders/create', [Admin\Housekeeping\LaundryController::class, 'create'])->name('create');

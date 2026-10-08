@@ -27,6 +27,8 @@ class Permissions
         'hk-tasks.manage' => 'Assign and update cleaning tasks',
         'hk-laundry.view' => 'View laundry orders and payments',
         'hk-laundry.manage' => 'Create laundry orders and take payments',
+        'hall-bookings.view' => 'View hall bookings, the hall status board and reports',
+        'hall-bookings.manage' => 'Create hall bookings and take payments',
         'hr-leave.manage' => 'Manage leave requests',
         'hr-loans.manage' => 'Issue staff loans',
         'hr-payroll.view' => 'View payroll and salaries',
@@ -55,8 +57,8 @@ class Permissions
     {
         return [
             'Super Admin' => [],
-            'Manager' => ['dashboard.', 'hk-', 'tr-', 'reservations.', 'reports.', 'purchases.', 'stock.', 'inv-', 'room-types.', 'rooms.', 'floors.', 'bed-types.', 'size-units.', 'facility-types.', 'facilities.', 'room-facilities.', 'room-images.', 'offers.', 'services.', 'taxes.', 'currencies.', 'promo-codes.', 'wake-up-calls.', 'customers.', 'star-classes.', 'booking-types.', 'accounts.view'],
-            'Front Desk' => ['dashboard.view', 'tr-', 'reservations.view', 'reservations.create', 'reservations.edit', 'reservations.status', 'reservations.payments', 'customers.view', 'customers.create', 'customers.edit', 'wake-up-calls.', 'rooms.view', 'room-types.view', 'offers.view', 'promo-codes.view'],
+            'Manager' => ['dashboard.', 'hk-', 'tr-', 'hall-', 'reservations.', 'reports.', 'purchases.', 'stock.', 'inv-', 'room-types.', 'rooms.', 'floors.', 'bed-types.', 'size-units.', 'facility-types.', 'facilities.', 'room-facilities.', 'room-images.', 'offers.', 'services.', 'taxes.', 'currencies.', 'promo-codes.', 'wake-up-calls.', 'customers.', 'star-classes.', 'booking-types.', 'accounts.view'],
+            'Front Desk' => ['dashboard.view', 'tr-', 'hall-bookings.', 'reservations.view', 'reservations.create', 'reservations.edit', 'reservations.status', 'reservations.payments', 'customers.view', 'customers.create', 'customers.edit', 'wake-up-calls.', 'rooms.view', 'room-types.view', 'offers.view', 'promo-codes.view'],
             'Accountant' => ['dashboard.view', 'reservations.view', 'reservations.payments', 'reports.view', 'accounts.', 'taxes.', 'currencies.', 'payment-methods.view', 'purchases.view', 'purchases.pay', 'inv-suppliers.view', 'hr-payroll.view'],
             'HR Manager' => ['dashboard.view', 'hr-'],
             'Housekeeping' => ['dashboard.view', 'hk-tasks.', 'hk-laundry.'],
