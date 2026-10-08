@@ -165,6 +165,22 @@ class InventoryTest extends HotelTestCase
         $this->assertLedgerBalanced();
     }
 
+    public function test_returns_list_invoice_destroyed_list_and_stock_report(): void
+    {
+        $purchase = $this->buy([['item' => $this->soap->id, 'quantity' => 100, 'unit_cost' => 2]]);
+        $line = PurchaseItem::firstOrFail();
+        $this->post("/admin/purchasing/purchases/{$purchase->id}/return", ['return_date' => today()->toDateString(), 'reason' => 'Damaged', 'qty' => [$line->id => 10]])->assertSessionHasNoErrors();
+        $this->post('/admin/purchasing/stock/waste', ['item' => $this->soap->id, 'quantity' => 5, 'reason' => 'Expired'])->assertSessionHasNoErrors();
+
+        $return = \App\Models\PurchaseReturn::firstOrFail();
+        $this->get('/admin/purchasing/returns')->assertOk()->assertSee($return->number)->assertSee('Acme Supplies');
+        $this->get("/admin/purchasing/returns/{$return->id}/invoice")->assertOk()->assertHeader('content-type', 'application/pdf');
+
+        $this->get('/admin/purchasing/stock/destroyed')->assertOk()->assertSee('Soap bar')->assertSee('Expired');
+        $this->get('/admin/reports/stock')->assertOk()->assertSee('Soap bar');
+        $this->get('/admin/reports/stock?export=csv')->assertOk();
+    }
+
     public function test_write_off_and_stock_count(): void
     {
         $this->buy([['item' => $this->soap->id, 'quantity' => 100, 'unit_cost' => 2]]);

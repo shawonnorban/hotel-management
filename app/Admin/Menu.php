@@ -24,6 +24,8 @@ class Menu
         ['Human resources', 'Staff loans', 'bi-cash-coin', 'admin.hr.loans.index', 'hr-loans.manage'],
         ['Human resources', 'Payroll', 'bi-cash-stack', 'admin.hr.payroll.index', 'hr-payroll.view'],
         ['Purchase manage', 'Purchases', 'bi-cart-check', 'admin.purchases.index', 'purchases.view'],
+        ['Purchase manage', 'Purchase return', 'bi-arrow-return-left', 'admin.returns.index', 'purchases.view'],
+        ['Units & products', 'Destroyed list', 'bi-trash3', 'admin.stock.destroyed', 'stock.view'],
         ['Units & products', 'Stock levels', 'bi-boxes', 'admin.stock.index', 'stock.view'],
         ['Accounting', 'Vouchers', 'bi-journal-text', 'admin.vouchers.index', 'accounts.view'],
         ['Accounting', 'Account ledger', 'bi-book', 'admin.accounting.ledger', 'accounts.view'],

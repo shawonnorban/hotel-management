@@ -8,7 +8,7 @@
     ['admin.reports.receipts', 'bi-receipt', 'Guest receipts', 'Money received from guests, by payment method.'],
     ['admin.reports.occupancy', 'bi-door-open', 'Occupancy', 'Rooms sold per day and the occupancy rate.'],
     ['admin.reports.purchases', 'bi-cart', 'Purchases', 'What you bought, from whom, and what is still owed.'],
-    ['admin.stock.index', 'bi-boxes', 'Stock valuation', 'Stock on hand and its value (Purchasing → Stock levels).'],
+    ['admin.reports.stock', 'bi-boxes', 'Stock', 'Movements per item for a period, with stock on hand and its value.'],
     ['admin.accounting.income-statement', 'bi-graph-up-arrow', 'Income statement', 'Profit and loss for a period.'],
     ['admin.accounting.balance-sheet', 'bi-bar-chart-steps', 'Balance sheet', 'Assets, liabilities and equity.'],
     ['admin.accounting.trial-balance', 'bi-calculator', 'Trial balance', 'Every account\'s balance on a date.'],

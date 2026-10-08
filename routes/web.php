@@ -135,6 +135,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/receipts', 'receipts')->name('receipts');
             Route::get('/occupancy', 'occupancy')->name('occupancy');
             Route::get('/purchases', 'purchases')->name('purchases');
+            Route::get('/stock', 'stock')->name('stock');
         });
 
         Route::prefix('hr')->name('hr.')->group(function () {
@@ -185,10 +186,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/purchases/{purchase}/pay', [Admin\PurchaseController::class, 'pay'])->middleware('can:purchases.pay')->name('purchases.pay');
             Route::middleware('can:purchases.view')->group(function () {
                 Route::get('/purchases', [Admin\PurchaseController::class, 'index'])->name('purchases.index');
+                Route::get('/returns', [Admin\PurchaseController::class, 'returns'])->name('returns.index');
+                Route::get('/returns/{return}/invoice', [Admin\PurchaseController::class, 'returnInvoice'])->whereNumber('return')->name('returns.invoice');
                 Route::get('/purchases/{purchase}', [Admin\PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
             });
             Route::middleware('can:stock.view')->group(function () {
                 Route::get('/stock', [Admin\StockController::class, 'index'])->name('stock.index');
+                Route::get('/stock/destroyed', [Admin\StockController::class, 'destroyed'])->name('stock.destroyed');
                 Route::get('/stock/movements', [Admin\StockController::class, 'movements'])->name('stock.movements');
             });
             Route::middleware('can:stock.adjust')->group(function () {

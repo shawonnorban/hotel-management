@@ -8,6 +8,10 @@ use App\Models\LedgerAccount;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Services\PurchaseService;
+use App\Models\PurchaseReturn;
+use App\Support\Money;
+use App\Support\Settings;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use RuntimeException;
@@ -33,6 +37,30 @@ class PurchaseController extends Controller
         $owed = (float) Purchase::query()->selectRaw('coalesce(sum(total - paid),0) as due')->value('due');
 
         return view('admin.purchases.index', ['purchases' => $purchases, 'f' => $f, 'suppliers' => Supplier::orderBy('name')->pluck('name', 'id'), 'owed' => $owed]);
+    }
+
+    public function returns(Request $request)
+    {
+        $f = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
+
+        $returns = PurchaseReturn::with('purchase.supplier')
+            ->when($f['q'] ?? null, function ($q, $term) {
+                $like = '%'.addcslashes($term, '%_\\').'%';
+                $q->where(fn ($w) => $w->where('number', 'like', $like)->orWhereHas('purchase', fn ($p) => $p->where('number', 'like', $like)->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', $like))));
+            })
+            ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('return_date', '>=', $v))
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('return_date', '<=', $v))
+            ->orderByDesc('return_date')->orderByDesc('id')->paginate(20)->withQueryString();
+
+        return view('admin.purchases.returns', ['returns' => $returns, 'f' => $f]);
+    }
+
+    public function returnInvoice(PurchaseReturn $return)
+    {
+        $return->load('purchase.supplier', 'movements');
+
+        return Pdf::loadView('pdf.purchase-return', ['return' => $return, 'hotel' => Settings::hotelName(), 'money' => fn ($v) => Money::format($v)])
+            ->download('return-'.$return->number.'.pdf');
     }
 
     public function create()

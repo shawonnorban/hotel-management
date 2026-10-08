@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BookedInfo;
 use App\Models\Purchase;
+use App\Models\InventoryItem;
 use App\Models\Roomdetails;
+use App\Models\StockMovement;
 use App\Models\TblGuestpayments;
 use App\Models\TblRoomnofloorassign;
 use Illuminate\Http\Request;
@@ -100,6 +102,31 @@ class ReportController extends Controller
         }
 
         return view('admin.reports.purchases', ['rows' => $rows, 'bySupplier' => $bySupplier, 'from' => $from, 'to' => $to, 'total' => round($rows->sum('total'), 2), 'due' => round($rows->sum(fn ($p) => $p->due), 2)]);
+    }
+
+    public function stock(Request $request)
+    {
+        [$from, $to] = $this->period($request);
+
+        $moves = StockMovement::whereDate('moved_at', '>=', $from)->whereDate('moved_at', '<=', $to)->get()->groupBy('item_id');
+        $rows = InventoryItem::with('unit', 'category')->orderBy('name')->get()->map(function ($item) use ($moves) {
+            $m = $moves->get($item->id, collect());
+            $sum = fn (string $type) => round((float) $m->where('type', $type)->sum('quantity'), 3);
+
+            return [
+                'item' => $item, 'purchased' => $sum('purchase'), 'returned' => abs($sum('return')), 'issued' => abs($sum('issue')),
+                'wasted' => abs($sum('waste')), 'adjusted' => $sum('adjustment'),
+                'on_hand' => (float) $item->stock, 'value' => round((float) $item->stock * (float) $item->avg_cost, 2),
+            ];
+        });
+        $totalValue = round($rows->sum('value'), 2);
+
+        if ($request->query('export') === 'csv') {
+            return $this->csv('stock-'.$from->format('Ymd').'-'.$to->format('Ymd'), ['Item', 'Unit', 'Purchased', 'Returned', 'Issued', 'Wasted', 'Adjusted', 'On hand', 'Value'],
+                $rows->map(fn ($r) => [$r['item']->name, $r['item']->unit->short_code, $r['purchased'], $r['returned'], $r['issued'], $r['wasted'], $r['adjusted'], $r['on_hand'], $r['value']])->all());
+        }
+
+        return view('admin.reports.stock', ['rows' => $rows, 'totalValue' => $totalValue, 'from' => $from, 'to' => $to]);
     }
 
     /** @return array{0:Carbon,1:Carbon} */

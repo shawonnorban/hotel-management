@@ -50,6 +50,20 @@ class StockController extends Controller
         return view('admin.stock.movements', ['movements' => $movements, 'f' => $f, 'items' => InventoryItem::orderBy('name')->pluck('name', 'id')]);
     }
 
+    /** Stock that was thrown away or written off (wastage), valued at what it cost. */
+    public function destroyed(Request $request)
+    {
+        $f = $request->validate(['item' => ['nullable', 'integer'], 'from' => ['nullable', 'date'], 'to' => ['nullable', 'date']]);
+
+        $query = StockMovement::with('item.unit', 'user')->where('type', 'waste')
+            ->when($f['item'] ?? null, fn ($q, $v) => $q->where('item_id', $v))
+            ->when($f['from'] ?? null, fn ($q, $v) => $q->whereDate('moved_at', '>=', $v))
+            ->when($f['to'] ?? null, fn ($q, $v) => $q->whereDate('moved_at', '<=', $v));
+        $loss = round((clone $query)->get()->sum(fn ($m) => abs((float) $m->quantity) * (float) $m->unit_cost), 2);
+
+        return view('admin.stock.destroyed', ['movements' => $query->orderByDesc('id')->paginate(30)->withQueryString(), 'f' => $f, 'loss' => $loss, 'items' => InventoryItem::orderBy('name')->pluck('name', 'id')]);
+    }
+
     public function issue(Request $request)
     {
         $d = $request->validate(['item' => ['required', 'integer', 'exists:inventory_items,id'], 'quantity' => ['required', 'numeric', 'gt:0'], 'reason' => ['required', 'string', 'max:200']]);
